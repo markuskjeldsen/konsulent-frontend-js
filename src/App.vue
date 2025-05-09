@@ -1,20 +1,18 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import { useAuthStore } from '@/stores/auth.js'
+
+const authStore = useAuthStore()
 </script>
 
 <template>
   <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
+    <nav>
+      <RouterLink v-if="authStore.isAuthenticated" to="/">Home</RouterLink>
+      <RouterLink v-if="authStore.isAuthenticated" to="/about">About</RouterLink>
+      <RouterLink v-if="!authStore.isAuthenticated" to="/login">Login</RouterLink>
+      <RouterLink v-if="authStore.isAuthenticated" to="/profile">Profile</RouterLink>
+    </nav>
   </header>
 
   <RouterView />
