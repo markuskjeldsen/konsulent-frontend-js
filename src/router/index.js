@@ -10,6 +10,9 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: {
+        roles: ['admin', 'user'], // This route requires admin role
+      },
     },
     {
       path: '/login',
@@ -20,13 +23,24 @@ const router = createRouter({
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue'),
+      meta: {
+        roles: ['user'], // This route requires user role
+      },
     },
     {
       path: '/profile',
       name: 'profile',
       component: () => import('../views/ProfileView.vue'),
       meta: {
-        requiresAuth: true, // This route requires authentication
+        roles: ['admin', 'user'], // This route requires admin role
+      },
+    },
+    {
+      path: '/Auditor/:id',
+      name: 'Auditor',
+      component: () => import('../views/AuditorView.vue'),
+      meta: {
+        roles: ['admin', 'user'], // This route requires admin role
       },
     },
   ],

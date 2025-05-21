@@ -8,6 +8,45 @@ const mockUser = {
   id: 1,
   name: 'Test User',
   email: 'test@example.com',
+  rights: 'user', // 'admin', 'user', 'developer'
+  phone: '123-456-7890',
+  visits: [
+    {
+      id: 1,
+      date: '2023-10-01',
+      time: '10:00',
+      location: 'Location A',
+    },
+    {
+      id: 2,
+      date: '2023-10-02',
+      time: '11:00',
+      location: 'Location B',
+    },
+    {
+      id: 15,
+      date: '2025-05-21',
+      time: '11:00',
+      location: 'Location B',
+    },
+  ],
+  visit_responses: [
+    {
+      id: 1,
+      response: 'Response A',
+    },
+    {
+      id: 2,
+      response: 'Response B',
+    },
+  ],
+}
+
+function normalizeUserResponse(data) {
+  if (!data) return null
+  if (data.id || data.ID) return data
+  if (data.user && (data.user.id || data.user.ID)) return data.user
+  return null
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -25,7 +64,7 @@ export const useAuthStore = defineStore('auth', {
         return
       }
       const { data } = await api.post('/login', credentials)
-      this.user = data.user || data
+      this.user = normalizeUserResponse(data)
     },
     async logout() {
       if (TESTING) {
@@ -43,7 +82,7 @@ export const useAuthStore = defineStore('auth', {
       }
       try {
         const { data } = await api.get('/user')
-        this.user = data.users || data.id ? data : null
+        this.user = normalizeUserResponse(data)
       } catch (err) {
         console.error('Error fetching user:', err)
         this.user = null

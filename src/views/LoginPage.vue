@@ -37,7 +37,8 @@ async function handleLogin() {
     if (response.status === 200) {
       console.log('Login successful')
 
-      router.push({ name: 'home' })
+      router.push('/')
+      router.go(0) // Refresh the page to apply changes
     }
     password.value = ''
     username.value = ''
