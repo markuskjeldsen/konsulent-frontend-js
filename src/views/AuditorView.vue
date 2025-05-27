@@ -8,6 +8,9 @@
       <p>Mail: {{ auditor.email }}</p>
       <p>id: {{ ID }}</p>
     </div>
+    <button class="manage-button" @click="EditRoute">
+      <span v-if="canEdit">Rediger Ruter</span>
+    </button>
     <div>
       <AuditorInformation v-if="auditor" :auditor="auditor" />
       <div v-else>Loading auditor info…</div>
@@ -31,12 +34,28 @@
  * @property {string} visit_interval
  * @property {boolean} visited
  */
-import { ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import api from '@/utils/axios.js'
 import AuditorInformation from '@/components/AuditorInformation.vue'
+import { useAuthStore } from '@/stores/auth.js'
+
+const ROLES = {
+  ADMIN: 'admin',
+  DEV: 'developer',
+  USER: 'user',
+}
 
 const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
+const user = computed(() => authStore.user)
+const auditor = ref()
+
+const canEdit = computed(() => {
+  const role = user.value?.rights
+  return role === ROLES.ADMIN || role === ROLES.DEV
+})
 
 // Get the id from the route parameters
 const ID = Number(route.params.id)
@@ -45,8 +64,6 @@ const expanded = ref(false)
 function toggleExpanded() {
   expanded.value = !expanded.value
 }
-
-const auditor = ref()
 
 api
   .get('/visit_responses')
@@ -57,6 +74,19 @@ api
     console.error('Error fetching auditor data:', error)
     // Fallback to mock data if API call fails
   })
+
+function EditRoute() {
+  if (!canEdit.value) {
+    console.warn('User does not have permission to edit auditors.')
+    return null
+  }
+  // Redirect to the edit route for the auditor
+  router.push({
+    name: 'routeEditor',
+    params: { id: ID },
+  })
+  console.log('Redirecting to edit route for auditor with ID:', ID)
+}
 </script>
 
 <style scoped>

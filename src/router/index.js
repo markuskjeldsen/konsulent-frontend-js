@@ -43,6 +43,14 @@ const router = createRouter({
         roles: ['admin', 'user'], // This route requires admin role
       },
     },
+    {
+      path: '/routeEditor/:id',
+      name: 'routeEditor',
+      component: () => import('../views/RouteEditorView.vue'),
+      meta: {
+        roles: ['admin', 'user'], // This route requires admin role
+      },
+    },
   ],
 })
 
