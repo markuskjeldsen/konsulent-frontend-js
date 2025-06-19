@@ -19,29 +19,29 @@
 
 <script setup>
 import { ref } from 'vue'
-import api from '@/utils/axios.js'
+import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
 
 const username = ref('')
 const password = ref('')
 const errorMessage = ref('')
+const authStore = useAuthStore()
 
 async function handleLogin() {
   console.log('Login attempt')
   errorMessage.value = ''
   try {
-    const response = await api.post('/login', {
+    await authStore.login({
       username: username.value,
       password: password.value,
     })
-    if (response.status === 200) {
+    await authStore.fetchUser()
+    if (authStore.isAuthenticated) {
       console.log('Login successful')
-
       router.push('/')
-      router.go(0) // Refresh the page to apply changes
+      password.value = ''
+      username.value = ''
     }
-    password.value = ''
-    username.value = ''
   } catch {
     errorMessage.value = 'Login failed. Please check your credentials.'
   }
