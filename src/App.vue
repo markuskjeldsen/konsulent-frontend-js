@@ -7,6 +7,7 @@
     <nav>
       <RouterLink v-if="authStore.isAuthenticated" to="/">Home</RouterLink>
       <RouterLink v-if="authStore.isAuthenticated" to="/about">About</RouterLink>
+      <RouterLink v-if="authStore.isAuthenticated" to="/routeplanner">Rute planlægning</RouterLink>
       <RouterLink v-if="!authStore.isAuthenticated" to="/login">Login</RouterLink>
       <RouterLink v-if="authStore.isAuthenticated" to="/profile">Profile</RouterLink>
     </nav>

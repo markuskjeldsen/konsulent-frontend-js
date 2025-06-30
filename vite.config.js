@@ -9,7 +9,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
   server: {
     host: true,
-    port: 5137,
+    port: 8080,
   },
   plugins: [vue(), vueJsx(), vueDevTools()],
   resolve: {

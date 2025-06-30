@@ -16,16 +16,16 @@
 
       <div class="d-inline-block text-start mb-3">
         <CardStatusField
-          :number="Math.abs(konsulent.visit_responses.length - konsulent.visits.length)"
+          :number="missingVisitsToday"
           active-class="text-danger"
           text="missing visits"
         />
       </div>
 
-      <div class="auditor-card-footer mt-auto">
-        <p class="mb-1">Next</p>
+      <div v-if="nextVisitTime" class="auditor-card-footer mt-auto">
+        <p class="mb-1">Next today</p>
         <p class="fw-bold">
-          {{ konsulent.visits[0]?.VisitDate }} {{ konsulent.visits[0]?.VisitTime }}
+          {{ nextVisitTime }}
         </p>
       </div>
     </div>
@@ -34,7 +34,8 @@
 
 <script setup>
 import CardStatusField from '@/components/CardStatusField.vue'
-import { defineProps } from 'vue'
+import { minBy } from 'lodash-es'
+import { defineProps, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -57,6 +58,32 @@ function upperFirst(fullName) {
 
   return initials
 }
+
+function isToday(dateString) {
+  const visitDate = new Date(dateString)
+  const today = new Date()
+  return (
+    visitDate.getFullYear() === today.getFullYear() &&
+    visitDate.getMonth() === today.getMonth() &&
+    visitDate.getDate() === today.getDate()
+  )
+}
+
+const nextVisitTime = computed(() => {
+  const todayVisits = props.konsulent.visits.filter(
+    (visit) => !visit.visit_response && isToday(visit.visit_date),
+  )
+  const minVisit = minBy(todayVisits, 'visit_time')
+  return minVisit ? minVisit.visit_time : null
+})
+
+const missingVisitsToday = computed(() => {
+  return Array.isArray(props.konsulent.visits)
+    ? props.konsulent.visits.filter(
+        (visit) => isToday(visit.visit_date) && !visit.visit_response, // Update this to your business logic
+      ).length
+    : 0
+})
 
 function open() {
   router.push(`/auditor/${props.konsulent.ID}`)
@@ -91,13 +118,13 @@ function getLuminance(color) {
 .auditor-card {
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  min-height: 250px; /* Add this line */
-  padding: 20px; /* Add this line */
-  display: flex; /* Add this line */
-  flex-direction: column; /* Add this line */
-  justify-content: center; /* Add this line */
+  min-height: 250px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   background-color: rgba(99, 169, 219, 0.178);
-  border-radius: 50px; /* Add this line */
+  border-radius: 50px;
 }
 
 .auditor-card-footer {

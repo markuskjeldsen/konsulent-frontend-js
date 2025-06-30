@@ -5,7 +5,7 @@
     <br />
 
     <div class="card-grid">
-      <div v-for="user in users" :key="user.id" class="card-container">
+      <div v-for="user in users" :key="user.ID" class="card-container">
         <KonsulentCard :konsulent="user" />
       </div>
     </div>
@@ -22,9 +22,14 @@ const authStore = useAuthStore()
 
 const users = ref([])
 
-api.get('/visit_responses').then((response) => {
-  users.value = response.data.users
-})
+api
+  .get('/visit_responses')
+  .then((response) => {
+    users.value = response.data.users.filter((user) => user.ID !== 1)
+  })
+  .catch((error) => {
+    console.error('Failed to fetch users:', error)
+  })
 </script>
 
 <style>

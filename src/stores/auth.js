@@ -1,6 +1,7 @@
 // src/stores/auth.js (Pinia example)
 import { defineStore } from 'pinia'
 import api from '@/utils/axios'
+import router from '@/router'
 
 function normalizeUserResponse(data) {
   if (!data) return null
@@ -19,10 +20,7 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
     async login(credentials) {
-      console.log('posting login')
       const { data } = await api.post('/login', credentials) // verifytoken
-      console.log(data)
-      console.log('posted a login')
       this.user = normalizeUserResponse(data)
     },
     async logout() {
@@ -31,7 +29,10 @@ export const useAuthStore = defineStore('auth', {
     },
     async fetchUser() {
       try {
-        const { data } = await api.get('/user')
+        var { data } = await api.get('/user')
+        if (data.rights === 'developer') {
+          data.rights = 'admin'
+        }
         this.user = normalizeUserResponse(data)
       } catch (err) {
         console.error('Error fetching user:', err)
@@ -39,6 +40,9 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.initializing = false
       }
+    },
+    async toLoginScreen() {
+      router.push('/login')
     },
   },
 })

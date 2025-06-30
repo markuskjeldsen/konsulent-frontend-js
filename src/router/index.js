@@ -11,7 +11,7 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
       meta: {
-        roles: ['admin', 'user'], // This route requires admin role
+        roles: ['admin', 'user', ''], // This route requires admin role
       },
     },
     {
@@ -47,6 +47,22 @@ const router = createRouter({
       path: '/routeEditor/:id',
       name: 'routeEditor',
       component: () => import('../views/RouteEditorView.vue'),
+      meta: {
+        roles: ['admin', 'user'], // This route requires admin role
+      },
+    },
+    {
+      path: '/routeplanner',
+      name: 'routeplanner',
+      component: () => import('../views/RouteplannerView.vue'),
+      meta: {
+        roles: ['admin', 'user'], // This route requires admin role
+      },
+    },
+    {
+      path: '/form/:id',
+      name: 'form',
+      component: () => import('../views/FormView.vue'),
       meta: {
         roles: ['admin', 'user'], // This route requires admin role
       },

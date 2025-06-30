@@ -17,14 +17,8 @@ import api from '@/utils/axios.js'
 import { useRoute } from 'vue-router'
 const route = useRoute()
 
-const ROLES = {
-  ADMIN: 'admin',
-  DEV: 'developer',
-  USER: 'user',
-}
-
 const authStore = useAuthStore()
-const user = computed(() => authStore.user) // user could change
+const user = authStore.user
 
 const ID = Number(route.params.id)
 const auditor = ref()

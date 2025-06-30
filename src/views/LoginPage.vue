@@ -18,9 +18,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
+import api from '@/utils/axios'
 
 const username = ref('')
 const password = ref('')
@@ -50,4 +51,16 @@ async function handleLogin() {
 function handleChange() {
   errorMessage.value = ''
 }
+
+onMounted(async () => {
+  try {
+    await api.get('/health') // Use a valid endpoint, e.g. '/health' or '/status'
+    // Backend is up, optionally clear error if you want:
+    errorMessage.value = ''
+    console.log('the backend is online')
+  } catch (err) {
+    console.log(err)
+    errorMessage.value = 'Cannot connect to backend'
+  }
+})
 </script>

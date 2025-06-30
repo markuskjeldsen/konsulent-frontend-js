@@ -8,10 +8,10 @@
       <p>Mail: {{ auditor.email }}</p>
       <p>id: {{ ID }}</p>
     </div>
-    <button class="manage-button" @click="EditRoute">
-      <span v-if="canEdit">Rediger Ruter</span>
-    </button>
-    <div>
+    <span v-if="canEdit">
+      <button class="manage-button" @click="EditRoute">Rediger Ruter</button>
+    </span>
+    <div style="width: 100%">
       <AuditorInformation v-if="auditor" :auditor="auditor" />
       <div v-else>Loading auditor info…</div>
     </div>
