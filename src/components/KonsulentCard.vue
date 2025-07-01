@@ -11,7 +11,7 @@
             borderRadius: '50%',
           }"
         />
-        <h2 class="h4 text-light auditor-name">{{ upperFirst(konsulent.username) }}</h2>
+        <h2 class="h4 text-light auditor-name">{{ upperFirst(konsulent.name) }}</h2>
       </div>
 
       <div class="d-inline-block text-start mb-3">

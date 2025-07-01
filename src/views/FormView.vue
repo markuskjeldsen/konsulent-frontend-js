@@ -180,8 +180,8 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/utils/axios'
 
-const route = useRoute()
 const router = useRouter()
+const route = useRoute()
 const ID = Number(route.params.id)
 const visitData = ref(null)
 const isSubmitting = ref(false)
@@ -199,6 +199,7 @@ const formData = reactive({
   comments: '',
   actual_latitude: '',
   actual_longitude: '',
+  posAccuracy: '',
   images: [],
 })
 
@@ -216,26 +217,36 @@ const submitForm = async () => {
   isSubmitting.value = true
 
   try {
-    const formDataToSend = new FormData()
-    formDataToSend.append('visit_id', ID)
-    formDataToSend.append('actual_date', new Date().toISOString())
-    formDataToSend.append('actual_time', new Date().toTimeString())
+    // first submit the data
+    const jsonData = {
+      visit_id: ID,
+      actual_date: new Date().toISOString(),
+      actual_time: new Date().toTimeString(),
+      ...Object.fromEntries(Object.entries(formData).filter(([key]) => key !== 'images')),
+    }
 
-    // Add form fields
-    Object.keys(formData).forEach((key) => {
-      if (key !== 'images') {
-        formDataToSend.append(key, formData[key])
+    const formResponse = await api.post('/visit-response/create', jsonData, {
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    // 2. Upload images one by one
+    if (formData.images.length > 0 && formResponse.data.ID) {
+      for (const [index, image] of formData.images.entries()) {
+        const imageFormData = new FormData()
+        imageFormData.append('visit_response_id', formResponse.data.ID)
+        imageFormData.append('image', image.file)
+        imageFormData.append('sequence', index + 1) // Optional: track order
+
+        const imageResponse = await api.post(
+          '/visit-response/' + formResponse.data.ID + '/images',
+          imageFormData,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          },
+        )
+        console.log(imageResponse)
       }
-    })
-
-    // Add images
-    formData.images.forEach((image, index) => {
-      formDataToSend.append(`images`, image.file)
-    })
-
-    await api.post('/visit-responses', formDataToSend, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    }
 
     router.push('/visits')
   } catch (error) {
@@ -256,6 +267,7 @@ const getLocation = () => {
     (position) => {
       formData.actual_latitude = position.coords.latitude.toString()
       formData.actual_longitude = position.coords.longitude.toString()
+      formData.pos_accuracy = position.coords.accuracy.toString()
       isCapturingLocation.value = false
     },
     (error) => {

@@ -24,7 +24,7 @@ const ID = Number(route.params.id)
 const auditor = ref()
 
 api
-  .get('/visit_responses')
+  .get('/visit-response/all')
   .then((response) => {
     auditor.value = response.data.users.find((user) => user.ID === ID)
   })

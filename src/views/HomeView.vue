@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>Velkommen {{ authStore.user.username }}</h1>
+    <h1>Velkommen {{ authStore.user.name }}</h1>
     <br />
     <br />
 
@@ -23,7 +23,7 @@ const authStore = useAuthStore()
 const users = ref([])
 
 api
-  .get('/visit_responses')
+  .get('/visit-response/all')
   .then((response) => {
     users.value = response.data.users.filter((user) => user.ID !== 1)
   })

@@ -1,8 +1,9 @@
 <template>
   <div>
     <h1>Profile</h1>
-    <p>Welcome to your profile page: {{ authStore.user.name }}</p>
-    <p>Here you can manage your account settings and preferences.</p>
+    <p>Velkommen til din Profil: {{ authStore.user.name }}</p>
+    <p>Her kan du ændre forskellige ting og se info omkring din bruger</p>
+    <p>Dit brugernavn er: {{ authStore.user.username }}</p>
     <p>Din rolle er: {{ authStore.user.rights }}</p>
 
     <!-- Editable Form -->

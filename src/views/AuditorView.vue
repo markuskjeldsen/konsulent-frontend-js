@@ -2,7 +2,7 @@
 <template>
   <div class="auditor-view">
     <h2>Konsulent Info</h2>
-    <p class="auditor-name" @click="toggleExpanded">Konsulent: {{ auditor?.username }}</p>
+    <p class="auditor-name" @click="toggleExpanded">Konsulent: {{ auditor?.name }}</p>
     <div v-if="expanded" class="auditor-details">
       <p>telefonnr: {{ auditor.phone }}</p>
       <p>Mail: {{ auditor.email }}</p>
@@ -66,7 +66,7 @@ function toggleExpanded() {
 }
 
 api
-  .get('/visit_responses')
+  .get('/visit-response/all')
   .then((response) => {
     auditor.value = response.data.users.find((user) => user.ID === ID)
   })
