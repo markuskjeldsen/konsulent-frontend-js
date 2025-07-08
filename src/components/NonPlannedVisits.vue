@@ -23,6 +23,7 @@
           </th>
           <th>Sagsnr</th>
           <th>Status</th>
+          <th>besøgs id</th>
           <th>Address</th>
           <th>Debitors</th>
         </tr>
@@ -34,6 +35,7 @@
           </td>
           <td>{{ visit.sagsnr }}</td>
           <td>{{ visit.status_id }}</td>
+          <td>{{ visit.ID }}</td>
           <td>{{ visit.address }}</td>
           <td>
             <div v-for="debitor in visit.debitors" :key="debitor.ID">

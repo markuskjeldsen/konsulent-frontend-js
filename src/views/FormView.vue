@@ -6,16 +6,26 @@
       </header>
 
       <div v-if="visitData" class="debtor-info-card">
-        <h3>Debitor Information</h3>
+        <h3>Debitor Info</h3>
         <div class="info-grid">
-          <div class="info-item">
-            <span class="label">Navn:</span>
-            <span class="value">{{ visitData.visit.debitors[0].name }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Telefon:</span>
-            <span class="value">{{ visitData.visit.debitors[0].phone }}</span>
-          </div>
+          <template v-for="(debitor, idx) in visitData.visit.debitors" :key="debitor.id || idx">
+            <div class="info-item">
+              <span class="label">Navn:</span>
+              <span class="value">{{ debitor.name }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Telefon:</span>
+              <span class="value">{{ debitor.phone }}</span>
+            </div>
+            <div v-if="debitor.birthday" class="info-item">
+              <span class="label">fødselsdag:</span>
+              <span class="value">{{ debitor.birthday.slice(0, 10) }}</span>
+            </div>
+            <div v-if="debitor.birthday" class="info-item">
+              <span class="label">Age:</span>
+              <span class="value">{{ calculateAge(debitor.birthday) }}</span>
+            </div>
+          </template>
           <div class="info-item">
             <span class="label">Adresse:</span>
             <span class="value">{{ visitData.visit.address }}</span>
@@ -23,6 +33,39 @@
           <div class="info-item">
             <span class="label">Sagsnr:</span>
             <span class="value">{{ visitData.visit.sagsnr }}</span>
+          </div>
+        </div>
+        <br />
+        <h3 @click="toggleExpanded">Gælds info</h3>
+        <div v-if="expanded">
+          <div v-if="debtData">
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="label">Restgæld Antaget:</span>
+                <span class="value"> {{ restgadoAntagetVal }}</span>
+              </div>
+
+              <div v-if="debtData.RestgeldVedBrev" class="info-item">
+                <span class="label">Restgæld ved afsent brev:</span>
+                <span class="value"> {{ debtData.RestgeldVedBrev }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">indbetalinger ved afsent brev:</span>
+                <span class="value"> {{ debtData.SumIndbetalingVedBrev }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">RestanceDato:</span>
+                <span class="value">{{
+                  debtData.RestanceDato
+                    ? new Date(debtData.RestanceDato).toLocaleDateString('da-DK')
+                    : ''
+                }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">SumIndbetalinger i alt:</span>
+                <span class="value">{{ debtData.SumIndbetalinger }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -77,6 +120,7 @@
                 <label class="input-label">Børn under 18:</label>
                 <input
                   type="number"
+                  inputmode="numeric"
                   v-model="formData.children_under_18"
                   min="0"
                   class="form-input"
@@ -86,6 +130,7 @@
                 <label class="input-label">Børn over 18:</label>
                 <input
                   type="number"
+                  inputmode="numeric"
                   v-model="formData.children_over_18"
                   min="0"
                   class="form-input"
@@ -102,27 +147,15 @@
             <label class="checkbox-label">
               <input type="checkbox" v-model="formData.asset_at_address" />
               <span class="checkmark"></span>
-              Aktiver på adressen?
+              Aktivet på adressen?
             </label>
-          </div>
-        </div>
-
-        <!-- GPS Coordinates -->
-        <div class="form-section">
-          <h4>GPS Koordinater</h4>
-          <button
-            type="button"
-            @click="getLocation"
-            :disabled="isCapturingLocation"
-            class="gps-button"
-          >
-            <span class="button-icon">📍</span>
-            {{ isCapturingLocation ? 'Henter position...' : 'Hent GPS koordinater' }}
-          </button>
-          <div v-if="formData.actual_latitude" class="gps-info">
-            <small
-              >Lat: {{ formData.actual_latitude }}, Long: {{ formData.actual_longitude }}</small
-            >
+            <div v-if="formData.asset_at_address" class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="formData.vehicle_damaged" />
+                <span class="checkmark"></span>
+                Er køretøjet beskadiget?
+              </label>
+            </div>
           </div>
         </div>
 
@@ -186,11 +219,15 @@ const ID = Number(route.params.id)
 const visitData = ref(null)
 const isSubmitting = ref(false)
 const isCapturingLocation = ref(false)
+const debtData = ref(null)
+const restgadoAntagetVal = ref(0)
+const expanded = ref(true)
 
 const formData = reactive({
   debitor_is_home: false,
   payment_received: false,
   asset_at_address: false,
+  asset_damaged: false,
   has_work: false,
   position: '',
   salary: 0,
@@ -203,19 +240,49 @@ const formData = reactive({
   images: [],
 })
 
+function toggleExpanded() {
+  expanded.value = !expanded.value
+}
+
 onMounted(async () => {
+  await getLocation()
   try {
-    const response = await api.get(`/visits/${ID}`)
+    const response = await api.get('/visits/byId', {
+      params: { id: ID },
+    })
     visitData.value = response.data
+    const debtInfo = await api.get('/visits/debt', {
+      params: { VisitId: ID },
+    })
+    debtData.value = debtInfo.data[0]
   } catch (error) {
     console.error('Error fetching visit:', error)
     // Handle error appropriately
   }
+
+  const antaget = parseFloat(debtData.value.RestgeldAntaget)
+  restgadoAntagetVal.value = antaget === 0 ? debtData.value.RestgeldVedBrev : antaget
 })
 
-const submitForm = async () => {
-  isSubmitting.value = true
+function calculateAge(birthday) {
+  if (!birthday) return ''
+  const birthDate = new Date(birthday)
+  const today = new Date()
+  let age = today.getFullYear() - birthDate.getFullYear()
+  const m = today.getMonth() - birthDate.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--
+  }
+  return age
+}
 
+const submitForm = async () => {
+  if (formData.asset_at_address && formData.images.length === 0) {
+    alert('Du skal tilføje mindst ét billede når køretøjet er til stede.')
+    return
+  }
+
+  isSubmitting.value = true
   try {
     // first submit the data
     const jsonData = {
@@ -257,25 +324,71 @@ const submitForm = async () => {
 }
 
 const getLocation = () => {
+  // Fallback coordinates (e.g., a default location like Copenhagen, Denmark)
+  const fallbackLocation = {
+    latitude: '0',
+    longitude: '0',
+    accuracy: '0',
+  }
+
   if (!navigator.geolocation) {
     alert('Geolocation ikke understøttet')
+    formData.actual_latitude = fallbackLocation.latitude
+    formData.actual_longitude = fallbackLocation.longitude
+    formData.pos_accuracy = fallbackLocation.accuracy
+    return
+  }
+
+  if (!window.isSecureContext) {
+    alert('Geolocation kræver en sikker forbindelse (HTTPS). Fallback placering bruges.')
+    formData.actual_latitude = fallbackLocation.latitude
+    formData.actual_longitude = fallbackLocation.longitude
+    formData.pos_accuracy = fallbackLocation.accuracy
     return
   }
 
   isCapturingLocation.value = true
-  navigator.geolocation.getCurrentPosition(
+  let bestPosition
+  let watchId = null
+
+  const finish = () => {
+    if (watchId !== null) navigator.geolocation.clearWatch(watchId)
+    if (bestPosition) {
+      formData.actual_latitude = bestPosition.coords.latitude.toString()
+      formData.actual_longitude = bestPosition.coords.longitude.toString()
+      formData.pos_accuracy = bestPosition.coords.accuracy.toString()
+    } else {
+      formData.actual_latitude = fallbackLocation.latitude
+      formData.actual_longitude = fallbackLocation.longitude
+      formData.pos_accuracy = fallbackLocation.accuracy
+    }
+    isCapturingLocation.value = false
+
+    console.log(formData.actual_latitude)
+    console.log(formData.actual_longitude)
+    console.log(formData.pos_accuracy)
+  }
+
+  watchId = navigator.geolocation.watchPosition(
     (position) => {
-      formData.actual_latitude = position.coords.latitude.toString()
-      formData.actual_longitude = position.coords.longitude.toString()
-      formData.pos_accuracy = position.coords.accuracy.toString()
-      isCapturingLocation.value = false
+      if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
+        bestPosition = position
+        // Stop if accuracy is below 15 meters (customize as needed)
+        if (position.coords.accuracy <= 15) finish()
+      }
     },
     (error) => {
       console.error('GPS error:', error)
-      isCapturingLocation.value = false
+      alert('Kunne ikke hente præcis placering. Fallback placering bruges.')
+      bestPosition = null
+      finish()
     },
-    { enableHighAccuracy: true, timeout: 10000 },
+    { enableHighAccuracy: true },
   )
+
+  // Force finish after 10 seconds to avoid infinite wait
+  console.log('starting geolocation')
+  setTimeout(finish, 10 * 1000)
 }
 
 const handleImageUpload = (event) => {

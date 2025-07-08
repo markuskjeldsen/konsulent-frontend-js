@@ -13,7 +13,7 @@
         <select v-model="selectedUser" required>
           <option value="" disabled>Vælg konsulent</option>
           <option v-for="user in users" :key="user.ID" :value="user.ID">
-            {{ user.username }}
+            {{ user.name }}
           </option>
         </select>
       </div>

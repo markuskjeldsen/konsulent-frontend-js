@@ -36,6 +36,13 @@
 </template>
 
 <script setup>
+/*
+This page will also hold some statistics about how successfull the user is with his endeavours. 
+how much time he uses answering the questionaire.
+personal statistics
+  missed visits
+  
+*/
 import { ref, reactive, watch } from 'vue'
 import router from '@/router'
 import { useAuthStore } from '@/stores/auth.js'

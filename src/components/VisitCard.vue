@@ -1,10 +1,13 @@
 <template>
   <tr style="width: 100%">
-    <td v-if="!visit.visit_response">
+    <td v-if="!visit.visit_response && visit.status_id == 3">
       <button class="visit-btn" @click="open">Besøg</button>
     </td>
-    <td v-else>
+    <td v-else-if="visit.status_id == 4">
       <button class="visit-btn" @click="edit">Rediger</button>
+    </td>
+    <td v-else>
+      <button class="visit-btn">Afvent</button>
     </td>
 
     <td>{{ visit.address }}</td>

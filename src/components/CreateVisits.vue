@@ -1,7 +1,4 @@
 <template>
-  <button @click="fetchAvailableVisits">
-    Press to get the available cases and debitors who are in status 5
-  </button>
   <div v-if="availableVisits.length > 0">
     <button @click="createVisits" :disabled="selectedVisitsSagsnr.length === 0">
       Create Visits
@@ -28,7 +25,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(visit, index) in availableVisits" :key="index">
+        <tr v-for="(visit, index) in availableVisits" :key="visit.sagsnr">
           <td>
             <input
               type="checkbox"
@@ -38,10 +35,17 @@
             />
           </td>
           <td>
-            "{{ visit.debtors[0].navn }}"
-            <div v-if="visit.debtors[1]">og "{{ visit.debtors[1].navn }}"</div>
-            <div v-if="visit.debtors[2]">og "{{ visit.debtors[2].navn }}"</div>
+            <div v-for="(debtor, dIndex) in visit.debtors" :key="debtor.navn">
+              <input
+                type="checkbox"
+                :id="`visit-${visit.sagsnr}-debtor-${dIndex}`"
+                :checked="selectedDebtors[visit.sagsnr]?.includes(dIndex)"
+                @change="toggleDebtorSelection(visit.sagsnr, dIndex)"
+              />
+              "{{ debtor.navn }}"
+            </div>
           </td>
+
           <td>{{ visit.adresse }}, {{ visit.postnr }} {{ visit.bynavn }}</td>
           <td>{{ visit.sagsnr }}</td>
           <td>{{ visit.status }}</td>
@@ -56,19 +60,24 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '@/utils/axios.js'
 
 const availableVisits = ref([])
 const selectedVisitsSagsnr = ref([])
+const selectedDebtors = ref({})
 const error = ref(null)
 
 const fetchAvailableVisits = async () => {
   try {
     const response = await api.get('/visits/AvailableVisit')
     availableVisits.value = response.data.results
+
+    selectedDebtors.value = {}
+    availableVisits.value.forEach((visit) => {
+      selectedDebtors.value[visit.sagsnr] = visit.debtors.map((_, i) => i)
+    })
     error.value = null
-    console.log(response.data.results)
   } catch (err) {
     console.error(err)
     error.value = 'Failed to fetch available visits'
@@ -77,10 +86,14 @@ const fetchAvailableVisits = async () => {
 }
 const createVisits = async () => {
   try {
-    const selectedVisits = availableVisits.value.filter((visit) =>
-      selectedVisitsSagsnr.value.includes(visit.sagsnr),
-    )
-    console.log(selectedVisits)
+    const selectedVisits = availableVisits.value
+      .filter((visit) => selectedVisitsSagsnr.value.includes(visit.sagsnr))
+      .map((visit) => ({
+        ...visit,
+        debtors: selectedDebtors.value[visit.sagsnr]
+          ? selectedDebtors.value[visit.sagsnr].map((idx) => visit.debtors[idx])
+          : [],
+      }))
 
     const response = await api.post('/visits/create', selectedVisits, {
       responseType: 'blob', // Important: tell axios to expect binary data
@@ -116,6 +129,19 @@ const selectAllVisits = (event) => {
 }
 const displayedSelectedVisits = computed(() => {
   return selectedVisitsSagsnr.value.slice(0, 10).join(', ')
+})
+
+function toggleDebtorSelection(sagsnr, dIndex) {
+  const current = selectedDebtors.value[sagsnr] || []
+  if (current.includes(dIndex)) {
+    selectedDebtors.value[sagsnr] = current.filter((idx) => idx !== dIndex)
+  } else {
+    selectedDebtors.value[sagsnr] = [...current, dIndex]
+  }
+}
+
+onMounted(() => {
+  fetchAvailableVisits()
 })
 </script>
 <style scoped>

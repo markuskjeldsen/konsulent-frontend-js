@@ -17,12 +17,12 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('../views/LoginPage.vue'),
+      component: () => import('@/views/LoginPage.vue'),
     },
     {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue'),
+      path: '/settings',
+      name: 'settings',
+      component: () => import('@/views/SettingsView.vue'),
       meta: {
         roles: ['user'], // This route requires user role
       },
@@ -30,7 +30,7 @@ const router = createRouter({
     {
       path: '/profile',
       name: 'profile',
-      component: () => import('../views/ProfileView.vue'),
+      component: () => import('@/views/ProfileView.vue'),
       meta: {
         roles: ['admin', 'user'], // This route requires admin role
       },
@@ -38,7 +38,7 @@ const router = createRouter({
     {
       path: '/Auditor/:id',
       name: 'Auditor',
-      component: () => import('../views/AuditorView.vue'),
+      component: () => import('@/views/AuditorView.vue'),
       meta: {
         roles: ['admin', 'user'], // This route requires admin role
       },
@@ -46,7 +46,7 @@ const router = createRouter({
     {
       path: '/routeEditor/:id',
       name: 'routeEditor',
-      component: () => import('../views/RouteEditorView.vue'),
+      component: () => import('@/views/RouteEditorView.vue'),
       meta: {
         roles: ['admin', 'user'], // This route requires admin role
       },
@@ -54,7 +54,7 @@ const router = createRouter({
     {
       path: '/routeplanner',
       name: 'routeplanner',
-      component: () => import('../views/RouteplannerView.vue'),
+      component: () => import('@/views/RouteplannerView.vue'),
       meta: {
         roles: ['admin', 'user'], // This route requires admin role
       },
@@ -62,7 +62,7 @@ const router = createRouter({
     {
       path: '/form/:id',
       name: 'form',
-      component: () => import('../views/FormView.vue'),
+      component: () => import('@/views/FormView.vue'),
       meta: {
         roles: ['admin', 'user'], // This route requires admin role
       },
