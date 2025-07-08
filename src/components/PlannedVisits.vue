@@ -75,7 +75,7 @@
     <div v-else-if="error">
       {{ error }}
     </div>
-    <div v-else>Loading...</div>
+    <div v-else>No planned visits found</div>
   </div>
 </template>
 

@@ -43,7 +43,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import api from '@/utils/axios'
-import { forEach } from 'lodash-es'
 
 const selectedVisits = ref([])
 const VisitStatus4 = ref([])
