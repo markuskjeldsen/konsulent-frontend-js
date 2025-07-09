@@ -5,7 +5,7 @@ import axios from 'axios'
 // Create an Axios instance
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 2 * 1000, // 1 seconds timeout
+  timeout: 10 * 1000, // 10 seconds timeout
   withCredentials: true, // <<< this makes axios send/receive cookies
   headers: {
     'Content-Type': 'application/json',

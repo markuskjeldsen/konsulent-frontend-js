@@ -17,15 +17,16 @@
           <th>
             <input type="checkbox" :checked="isSelectAll" @change="selectAllVisits($event)" />
           </th>
-          <th>Name</th>
-          <th>Address</th>
-          <th>Case Number</th>
+          <th>Navn</th>
+          <th>Adresse</th>
+          <th>Sags nummer</th>
           <th>Status</th>
           <th>Info</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(visit, index) in availableVisits" :key="visit.sagsnr">
+        <tr v-for="visit in availableVisits" :key="visit.sagsnr">
+          <!-- index was used -->
           <td>
             <input
               type="checkbox"
