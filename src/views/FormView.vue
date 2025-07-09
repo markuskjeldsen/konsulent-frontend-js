@@ -10,7 +10,7 @@
         <div class="info-grid">
           <template v-for="(debitor, idx) in visitData.visit.debitors" :key="debitor.id || idx">
             <div class="info-item">
-              <span class="label">Navn:</span>
+              <span class="label" style="font-size: large">Navn:</span>
               <span class="value">{{ debitor.name }}</span>
             </div>
             <div class="info-item">
@@ -86,7 +86,7 @@
         <!-- Conditional sections -->
         <div v-if="formData.debitor_is_home" class="conditional-section">
           <div class="form-section">
-            <h4>Betaling & Arbejde</h4>
+            <h4>Personinfo & Arbejde</h4>
             <div class="checkbox-group">
               <label class="checkbox-label">
                 <input type="checkbox" v-model="formData.payment_received" />
@@ -111,6 +111,15 @@
                 <input type="number" v-model="formData.salary" step="0.01" class="form-input" />
               </div>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="civilStatus" class="input-label">Civilstand:</label>
+            <select id="civilStatus" v-model="formData.civil_status" class="form-select" required>
+              <option value="gift">Gift</option>
+              <option value="samboende">Samboende</option>
+              <option value="enlig">Enlig</option>
+            </select>
           </div>
 
           <div class="form-section">
@@ -151,11 +160,52 @@
             </label>
             <div v-if="formData.asset_at_address" class="checkbox-group">
               <label class="checkbox-label">
+                <input type="checkbox" v-model="formData.asset_delivered" />
+                <span class="checkmark"></span>
+                Aktivet Afleveret?
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="formData.KeysReceived" />
+                <span class="checkmark"></span>
+                Nøgler Modtaget?
+              </label>
+            </div>
+            <div v-if="formData.asset_at_address" class="checkbox-group">
+              <label class="checkbox-label">
                 <input type="checkbox" v-model="formData.vehicle_damaged" />
                 <span class="checkmark"></span>
                 Er køretøjet beskadiget?
               </label>
             </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4>Boligen</h4>
+          <div class="checkbox-group">
+            <!-- Bolig type -->
+            <label for="boligType" class="checkbox-label"> bolig type</label>
+            <select id="boligType" v-model="formData.bolig_type" class="form-select">
+              <option value="Fritliggende">Fritliggende</option>
+              <option value="Byhus">Byhus</option>
+              <option value="Kolonihave">Kolonihave</option>
+              <option value="lejlighed">Lejlighed</option>
+              <option value="rækkehus">Rækkehus</option>
+              <option value="sommerhus">Sommerhus</option>
+            </select>
+            <!-- Stand -->
+            <label for="boligStand" class="checkbox-label"> bolig stand</label>
+            <select id="boligStand" v-model="formData.bolig_stand" class="form-select">
+              <option value="god">God</option>
+              <option value="dårlig">Dårlig</option>
+            </select>
+            <!-- ejerforhold -->
+            <label for="ejerforhold" class="checkbox-label"> ejerforhold</label>
+            <select id="ejerforhold" v-model="formData.ejerforhold" class="form-select">
+              <option value="EjerBolig">Ejer</option>
+              <option value="LejerBolig">Lejer</option>
+              <option value="AndelsBolig">Andels</option>
+            </select>
           </div>
         </div>
 
@@ -621,6 +671,16 @@ const removeImage = (index) => {
   outline: none;
   border-color: #4facfe;
   box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+}
+
+.form-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
 }
 
 .gps-button,
