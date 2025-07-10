@@ -116,6 +116,7 @@ async function getPlannedVisits() {
       konsulentName: konsulent.name,
     })),
   )
+  visits.value.sort((a, b) => a.stop_nr - b.stop_nr)
   visits.value.forEach((visit) => {
     visit.visit_date = new Date(visit.visit_date)
   })
