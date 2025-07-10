@@ -3,6 +3,7 @@
   <div v-if="error" class="error">{{ error }}</div>
 
   <!-- Visits Table -->
+  <button @click="moveToStatus5">Press here to move selected visits to status 5</button>
   <table class="visits-table">
     <thead>
       <tr>
@@ -36,7 +37,6 @@
       </tr>
     </tbody>
   </table>
-
   <button @click="requestPdfs">Press here to get the PDF</button>
 </template>
 
@@ -65,6 +65,39 @@ const fetchVisits = async () => {
 
 // Fetch list when the component is mounted
 onMounted(fetchVisits)
+
+function moveToStatus5() {
+  if (selectedVisits.value.length === 0) {
+    error.value = 'Please select at least one visit to move to status 5.'
+    return
+  }
+  error.value = null
+
+  // for testing add a wrong id
+  // selectedVisits.value.push(9999)
+  const visitsToMove = [...selectedVisits.value]
+
+  api
+    .post('/visit/reviewed', { reviewed_ids: visitsToMove })
+    .then((response) => {
+      const result = response.data
+      // Filter out items with an error
+      const errors = result.filter((item) => item.err !== 'no error')
+      if (errors.length) {
+        // Concatenate all error messages
+        error.value = errors.map((item) => `ID ${item.id}: ${item.err}`).join('; ')
+      } else {
+        selectedVisits.value = []
+        fetchVisits()
+        error.value = null
+      }
+    })
+    .catch((err) => {
+      console.error('Error moving visits to status 5:', err)
+      error.value = 'Failed to move visits to status 5. Please try again.'
+    })
+  fetchVisits()
+}
 
 function requestPdfs() {
   selectedVisits.value.forEach((id) => {
