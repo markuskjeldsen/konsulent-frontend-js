@@ -30,6 +30,7 @@
               <button @click="cancelEdit">Cancel</button>
             </td>
             <td v-else>
+              <button @click="markAsSent(visit.ID)">LetterSent</button>
               <button @click="editVisit(visit.ID)">Edit visit</button>
             </td>
 
@@ -93,25 +94,32 @@ const users = ref([])
 
 onMounted(async () => {
   try {
-    const res = await api.get('/visits/planned')
-    // Flatten data to visits array, keeping konsulentName on visit
-    visits.value = (res.data || []).flatMap((konsulent) =>
-      (konsulent.visits || []).map((visit) => ({
-        ...visit,
-        konsulentName: konsulent.name,
-      })),
-    )
-    visits.value.forEach((visit) => {
-      visit.visit_date = new Date(visit.visit_date)
-    })
-
-    const response = await api.get('/users')
-    users.value = response.data.users
+    await getPlannedVisits()
+    await getUsers()
   } catch (e) {
     console.log(e)
     error.value = 'Failed to load visits'
   }
 })
+
+async function getUsers() {
+  const response = await api.get('/users')
+  users.value = response.data.users || []
+}
+
+async function getPlannedVisits() {
+  const res = await api.get('/visits/planned')
+  // Flatten data to visits array, keeping konsulentName on visit
+  visits.value = (res.data || []).flatMap((konsulent) =>
+    (konsulent.visits || []).map((visit) => ({
+      ...visit,
+      konsulentName: konsulent.name,
+    })),
+  )
+  visits.value.forEach((visit) => {
+    visit.visit_date = new Date(visit.visit_date)
+  })
+}
 
 function formatDate(date) {
   if (!(date instanceof Date)) date = new Date(date)
@@ -171,6 +179,24 @@ function editVisit(visitId) {
     konsulentId: visit.user_id,
     visit_date: toISODateString(visit.visit_date),
   }
+}
+
+function markAsSent(visitId) {
+  api
+    // i want to send it as a parameter, not in the body
+    .post('/visit/letterSent', null, { params: { id: visitId } })
+    .then(() => {
+      // Optionally, show feedback to user
+      console.log(`Visit ${visitId} marked as sent`)
+
+      // remount the component to refresh data
+      editingId.value = null
+      getPlannedVisits()
+    })
+    .catch((err) => {
+      console.error('Error marking visit as sent:', err)
+      error.value = 'Failed to mark visit as sent. Please try again.'
+    })
 }
 </script>
 
