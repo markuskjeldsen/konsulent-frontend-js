@@ -1,6 +1,6 @@
 <template>
   <tr style="width: 100%">
-    <td v-if="!visit.visit_response && visit.status_id == 3">
+    <td v-if="!visit.visit_response && visit.status_id == 3 && isToday">
       <button class="visit-btn" @click="open">Besøg</button>
     </td>
     <td v-else-if="visit.status_id == 4">
@@ -27,9 +27,20 @@
 
 <script setup>
 import router from '@/router'
+import { computed } from 'vue'
 
 const props = defineProps({
   visit: Object,
+})
+const isToday = computed(() => {
+  const today = new Date()
+  const visitDate = new Date(props.visit.visit_date)
+
+  return (
+    today.getFullYear() === visitDate.getFullYear() &&
+    today.getMonth() === visitDate.getMonth() &&
+    today.getDate() === visitDate.getDate()
+  )
 })
 
 function open() {

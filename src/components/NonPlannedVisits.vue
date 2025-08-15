@@ -14,37 +14,24 @@
     <!-- Error Display -->
     <div v-if="error" class="error">{{ error }}</div>
 
-    <!-- Visits Table -->
-    <table class="visits-table">
-      <thead>
-        <tr>
-          <th>
-            <input type="checkbox" @change="toggleAll" :checked="allSelected" />
-          </th>
-          <th>Sagsnr</th>
-          <th>Status</th>
-          <th>besøgs id</th>
-          <th>Address</th>
-          <th>Debitors</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="visit in plannedVisits" :key="visit.ID">
-          <td>
-            <input type="checkbox" v-model="selectedVisits" :value="visit.ID" />
-          </td>
-          <td>{{ visit.sagsnr }}</td>
-          <td>{{ visit.status_id }}</td>
-          <td>{{ visit.ID }}</td>
-          <td>{{ visit.address }}</td>
-          <td>
-            <div v-for="debitor in visit.debitors" :key="debitor.ID">
-              {{ debitor.name }}
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <DataTable
+      :data="plannedVisits"
+      :columns="columns"
+      selectable
+      filterable
+      paginated
+      :page-size="100"
+      @selection-changed="handleSelectionChange"
+    >
+      <template #cell-debitors="{ item }">
+        <div v-for="(debtors, dIndex) in item.debitors" :key="debtors.name">
+          "{{ debtors?.name }}"
+        </div>
+      </template>
+      <template #cell-adresse="{ item }">
+        {{ item.adresse }}, {{ item.postnr }} {{ item.bynavn }}
+      </template>
+    </DataTable>
   </div>
 </template>
 
@@ -52,15 +39,25 @@
 import api from '@/utils/axios'
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth' // Adjust import path
+import DataTable from '@/components/DataTable.vue'
 
 const selectedVisits = ref([])
 const selectedUser = ref('')
 const selectedDate = ref('')
+const selectedDebtors = ref({})
 const users = ref([]) // You'll need to fetch this
 const isPlanning = ref(false)
 const authStore = useAuthStore()
 const plannedVisits = ref([])
 const error = ref()
+
+const columns = [
+  { key: 'sagsnr', label: 'Sags nummer', sortable: true, filterable: true },
+  { key: 'ID', label: 'besøgsid', sortable: true, filterable: true },
+  { key: 'debitors', label: 'Debitorer', sortable: false, filterable: false },
+  { key: 'address', label: 'Adresse', sortable: false, filterable: true },
+  { key: 'status_id', label: 'StatusId', sortable: true, filterable: true },
+]
 
 const today = computed(() => new Date().toISOString().split('T')[0])
 const allSelected = computed(
@@ -77,10 +74,28 @@ const toggleAll = () => {
   }
 }
 
+// Update toggleDebtorSelection function
+function toggleDebtorSelection(visitId, dIndex) {
+  const current = selectedDebtors.value[visitId] || []
+  if (current.includes(dIndex)) {
+    selectedDebtors.value[visitId] = current.filter((idx) => idx !== dIndex)
+  } else {
+    selectedDebtors.value[visitId] = [...current, dIndex]
+  }
+}
+
 const fetchCreatedVisits = async () => {
   try {
     const response = await api.get('/visits/create')
     plannedVisits.value = response.data.data
+
+    // Initialize selectedDebtors using visit IDs
+    selectedDebtors.value = {}
+    plannedVisits.value.forEach((visit) => {
+      selectedDebtors.value[visit.ID] = visit.debitors.map((_, i) => i)
+    })
+
+    console.log(response.data.data)
     error.value = null
   } catch (err) {
     console.error(err)
@@ -147,6 +162,11 @@ const fetchUsers = async () => {
   } catch (err) {
     console.error('Failed to fetch users:', err)
   }
+}
+
+const handleSelectionChange = (selectedIndices) => {
+  selectedVisits.value = selectedIndices.map((index) => plannedVisits.value[index].ID)
+  console.log('handleselectionChange')
 }
 
 // Call fetchUsers on component mount

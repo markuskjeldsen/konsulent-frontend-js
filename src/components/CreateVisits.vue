@@ -3,81 +3,74 @@
     <button @click="createVisits" :disabled="selectedVisitsSagsnr.length === 0">
       Create Visits
     </button>
-    <p>
-      Selected Visits: {{ displayedSelectedVisits }}
-      <span v-if="selectedVisitsSagsnr.length > 10"
-        >... and {{ selectedVisitsSagsnr.length - 10 }} more</span
-      >
-    </p>
+    <p>Selected: {{ selectedVisitsSagsnr.length }} visits</p>
 
-    <h2>Available Visits:</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>
-            <input type="checkbox" :checked="isSelectAll" @change="selectAllVisits($event)" />
-          </th>
-          <th>Navn</th>
-          <th>Adresse</th>
-          <th>Sags nummer</th>
-          <th>Status</th>
-          <th>Info</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="visit in availableVisits" :key="visit.sagsnr">
-          <!-- index was used -->
-          <td>
-            <input
-              type="checkbox"
-              :id="'visit-' + visit.sagsnr"
-              :value="visit.sagsnr"
-              v-model="selectedVisitsSagsnr"
-            />
-          </td>
-          <td>
-            <div v-for="(debtor, dIndex) in visit.debtors" :key="debtor.navn">
-              <input
-                type="checkbox"
-                :id="`visit-${visit.sagsnr}-debtor-${dIndex}`"
-                :checked="selectedDebtors[visit.sagsnr]?.includes(dIndex)"
-                @change="toggleDebtorSelection(visit.sagsnr, dIndex)"
-              />
-              "{{ debtor.navn }}"
-            </div>
-          </td>
+    <DataTable
+      :data="availableVisits"
+      :columns="columns"
+      selectable
+      filterable
+      paginated
+      :page-size="100"
+      @selection-changed="handleSelectionChange"
+    >
+      <template #cell-debtors="{ item }">
+        <div v-for="(debtor, dIndex) in item.debtors" :key="debtor.navn">
+          <input
+            type="checkbox"
+            :checked="selectedDebtors[getVisitKey(item)]?.includes(dIndex)"
+            @change="toggleDebtorSelection(getVisitKey(item), dIndex)"
+          />
+          "{{ debtor.navn }}"
+        </div>
+      </template>
 
-          <td>{{ visit.adresse }}, {{ visit.postnr }} {{ visit.bynavn }}</td>
-          <td>{{ visit.sagsnr }}</td>
-          <td>{{ visit.status }}</td>
-          <td>{{ visit.forlobInfo }}</td>
-        </tr>
-      </tbody>
-    </table>
+      <template #cell-adresse="{ item }">
+        {{ item.adresse }}, {{ item.postnr }} {{ item.bynavn }}
+      </template>
+    </DataTable>
   </div>
-  <div v-else-if="error">
-    {{ error }}
-  </div>
+  <div v-else-if="error">{{ error }}</div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import api from '@/utils/axios.js'
+import DataTable from '@/components/DataTable.vue'
+
+const columns = [
+  { key: 'sagsnr', label: 'Sags nummer', sortable: true, filterable: true },
+  { key: 'debtors', label: 'Debitorer', sortable: false, filterable: false },
+  { key: 'adresse', label: 'Adresse', sortable: false, filterable: true },
+  { key: 'status', label: 'Status', sortable: true, filterable: true },
+  { key: 'frist_dato', label: 'Frist dato', sortable: true, filterable: true },
+]
 
 const availableVisits = ref([])
 const selectedVisitsSagsnr = ref([])
 const selectedDebtors = ref({})
 const error = ref(null)
 
+// Add this helper function
+const getVisitKey = (visit) => {
+  // Create a unique key using sagsnr + adresse + postnr + first debtor name
+  return `${visit.sagsnr}-${visit.adresse}-${visit.postnr}-${visit.debtors[0]?.navn || ''}`
+}
+
 const fetchAvailableVisits = async () => {
   try {
     const response = await api.get('/visits/AvailableVisit')
-    availableVisits.value = response.data.results
+
+    availableVisits.value = response.data.results.sort((a, b) => {
+      return Number(a.sagsnr) - Number(b.sagsnr)
+    })
 
     selectedDebtors.value = {}
     availableVisits.value.forEach((visit) => {
-      selectedDebtors.value[visit.sagsnr] = visit.debtors.map((_, i) => i)
+      const visitKey = getVisitKey(visit)
+      selectedDebtors.value[visitKey] = visit.debtors.map((_, i) => i)
     })
+
     error.value = null
   } catch (err) {
     console.error(err)
@@ -85,19 +78,29 @@ const fetchAvailableVisits = async () => {
     availableVisits.value = []
   }
 }
+
+const handleSelectionChange = (selectedSagsnrs) => {
+  selectedVisitsSagsnr.value = selectedSagsnrs
+  console.log('handleselectionChange')
+}
+
 const createVisits = async () => {
   try {
-    const selectedVisits = availableVisits.value
-      .filter((visit) => selectedVisitsSagsnr.value.includes(visit.sagsnr))
-      .map((visit) => ({
-        ...visit,
-        debtors: selectedDebtors.value[visit.sagsnr]
-          ? selectedDebtors.value[visit.sagsnr].map((idx) => visit.debtors[idx])
-          : [],
-      }))
+    const selectedVisits = selectedVisitsSagsnr.value
+      .map((index) => availableVisits.value[index])
+      .filter((visit) => visit)
+      .map((visit) => {
+        const visitKey = getVisitKey(visit)
+        return {
+          ...visit,
+          debtors: selectedDebtors.value[visitKey]
+            ? selectedDebtors.value[visitKey].map((idx) => visit.debtors[idx])
+            : [],
+        }
+      })
 
     const response = await api.post('/visits/create', selectedVisits, {
-      responseType: 'blob', // Important: tell axios to expect binary data
+      responseType: 'blob',
     })
 
     // Create blob and download
@@ -113,7 +116,8 @@ const createVisits = async () => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
   } catch (err) {
-    console.error(err)
+    console.error('Failed to create visits:', err)
+    // Consider adding user feedback here
   }
 }
 
@@ -132,12 +136,12 @@ const displayedSelectedVisits = computed(() => {
   return selectedVisitsSagsnr.value.slice(0, 10).join(', ')
 })
 
-function toggleDebtorSelection(sagsnr, dIndex) {
-  const current = selectedDebtors.value[sagsnr] || []
+function toggleDebtorSelection(visitKey, dIndex) {
+  const current = selectedDebtors.value[visitKey] || []
   if (current.includes(dIndex)) {
-    selectedDebtors.value[sagsnr] = current.filter((idx) => idx !== dIndex)
+    selectedDebtors.value[visitKey] = current.filter((idx) => idx !== dIndex)
   } else {
-    selectedDebtors.value[sagsnr] = [...current, dIndex]
+    selectedDebtors.value[visitKey] = [...current, dIndex]
   }
 }
 

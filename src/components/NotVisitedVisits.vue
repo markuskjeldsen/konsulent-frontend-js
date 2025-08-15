@@ -3,36 +3,27 @@
     <h2>Ikke besøgt</h2>
     <p>man kan også sige at de mangler at blive besøgt</p>
   </div>
-  <table class="visits-table">
-    <thead>
-      <tr>
-        <th>besøgs id</th>
-        <th>Konsulent</th>
-        <th>Sagsnr</th>
-        <th>Status</th>
-        <th>Address</th>
-        <th>Debitorer</th>
-        <th>besøgs tidspnkt</th>
-        <th>besøgs dato</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="visit in notVisitedVisits" :key="visit.ID">
-        <td>{{ visit.ID }}</td>
-        <td>{{ visit.user.name }}</td>
-        <td>{{ visit.sagsnr }}</td>
-        <td>{{ visit.status_id }}: {{ visit.status.text }}</td>
-        <td>{{ visit.address }}</td>
-        <td>
-          <div v-for="debitor in visit.debitors" :key="debitor.ID">
-            {{ debitor.name }}
-          </div>
-        </td>
-        <td>{{ visit.visit_time }}</td>
-        <td>{{ visit.visit_date }}</td>
-      </tr>
-    </tbody>
-  </table>
+
+  <DataTable
+    :data="notVisitedVisits"
+    :columns="columns"
+    selectable
+    filterable
+    paginated
+    :page-size="100"
+    @selection-changed="handleSelectionChange"
+  >
+    <template #cell-debitors="{ item }">
+      <div v-for="debitor in item.debitors" :key="debitor.ID">
+        {{ debitor.name }}
+      </div>
+    </template>
+    <template #cell-status="{ item }"> {{ item.status.ID }}: {{ item.status.text }} </template>
+
+    <template #cell-visit_date="{ item }">
+      {{ item.visit_date }}
+    </template>
+  </DataTable>
 </template>
 
 <script setup>
@@ -40,6 +31,15 @@ import api from '@/utils/axios'
 import { ref, onMounted } from 'vue'
 import { parseISO, format } from 'date-fns'
 import { da } from 'date-fns/locale/da'
+import DataTable from './DataTable.vue'
+
+const columns = [
+  { key: 'sagsnr', label: 'Sags nummer', sortable: true, filterable: true },
+  { key: 'debitors', label: 'Debitorer', sortable: false, filterable: false },
+  { key: 'address', label: 'Adresse', sortable: false, filterable: true },
+  { key: 'status', label: 'Status', sortable: true, filterable: true },
+  { key: 'visit_date', label: 'Besøgs dato', sortable: true, filterable: true },
+]
 
 const notVisitedVisits = ref([])
 const error = ref(null)
@@ -75,6 +75,12 @@ onMounted(async () => {
     console.error('Error fetching not visited visits:', err)
   }
 })
+const handleSelectionChange = (selectedItems) => {
+  //notVisitedVisits
+  const caseNumbers = selectedItems.map((item) => item.sagsnr)
+  console.log('Selected Case Numbers:', caseNumbers)
+  // You can handle the selection change here if needed
+}
 </script>
 <style scoped>
 .visits-table {

@@ -114,8 +114,8 @@
           </div>
 
           <div class="form-group">
-            <label for="civilStatus" class="input-label">Civilstand:</label>
-            <select id="civilStatus" v-model="formData.civil_status" class="form-select" required>
+            <label for="CivilStatus" class="input-label">Civilstand:</label>
+            <select id="CivilStatus" v-model="formData.civil_status" class="form-select" required>
               <option value="gift">Gift</option>
               <option value="samboende">Samboende</option>
               <option value="enlig">Enlig</option>
@@ -185,7 +185,7 @@
           <div class="checkbox-group">
             <!-- Bolig type -->
             <label for="boligType" class="checkbox-label"> bolig type</label>
-            <select id="boligType" v-model="formData.bolig_type" class="form-select">
+            <select id="boligType" v-model="formData.property_type" class="form-select">
               <option value="Fritliggende">Fritliggende</option>
               <option value="Byhus">Byhus</option>
               <option value="Kolonihave">Kolonihave</option>
@@ -194,14 +194,18 @@
               <option value="sommerhus">Sommerhus</option>
             </select>
             <!-- Stand -->
-            <label for="boligStand" class="checkbox-label"> bolig stand</label>
-            <select id="boligStand" v-model="formData.bolig_stand" class="form-select">
+            <label for="maintenance_status" class="checkbox-label"> bolig stand</label>
+            <select
+              id="maintenance_status"
+              v-model="formData.maintenance_status"
+              class="form-select"
+            >
               <option value="god">God</option>
               <option value="dårlig">Dårlig</option>
             </select>
-            <!-- ejerforhold -->
-            <label for="ejerforhold" class="checkbox-label"> ejerforhold</label>
-            <select id="ejerforhold" v-model="formData.ejerforhold" class="form-select">
+            <!-- ownership_status -->
+            <label for="ownership_status" class="checkbox-label"> ejerforhold</label>
+            <select id="ownership_status" v-model="formData.ownership_status" class="form-select">
               <option value="EjerBolig">Ejer</option>
               <option value="LejerBolig">Lejer</option>
               <option value="AndelsBolig">Andels</option>
@@ -275,6 +279,7 @@ const expanded = ref(true)
 
 const formData = reactive({
   debitor_is_home: false,
+  civil_status: '',
   payment_received: false,
   asset_at_address: false,
   asset_damaged: false,
@@ -284,6 +289,9 @@ const formData = reactive({
   children_under_18: 0,
   children_over_18: 0,
   comments: '',
+  property_type: '',
+  maintenance_status: '',
+  ownership_status: '',
   actual_latitude: '',
   actual_longitude: '',
   posAccuracy: '',

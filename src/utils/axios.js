@@ -10,6 +10,13 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  user: {
+    getAll: () => api.get('/users'),
+    getById: (id) => api.get(`/users/${id}`),
+    create: (data) => api.post('/users', data),
+    update: (id, data) => api.patch(`/users/${id}`, data),
+    delete: (id) => api.delete(`/users/${id}`),
+  },
 })
 
 // Optional: response interceptor to catch 401 globally
