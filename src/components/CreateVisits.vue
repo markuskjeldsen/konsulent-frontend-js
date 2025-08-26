@@ -42,7 +42,7 @@ const columns = [
   { key: 'sagsnr', label: 'Sags nummer', sortable: true, filterable: true },
   { key: 'debtors', label: 'Debitorer', sortable: false, filterable: false },
   { key: 'adresse', label: 'Adresse', sortable: false, filterable: true },
-  { key: 'status', label: 'Status', sortable: true, filterable: true },
+  { key: 'status', label: 'Advopro Status', sortable: true, filterable: true },
   { key: 'frist_dato', label: 'Frist dato', sortable: true, filterable: true },
 ]
 

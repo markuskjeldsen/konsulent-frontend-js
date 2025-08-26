@@ -95,7 +95,6 @@ const fetchCreatedVisits = async () => {
       selectedDebtors.value[visit.ID] = visit.debitors.map((_, i) => i)
     })
 
-    console.log(response.data.data)
     error.value = null
   } catch (err) {
     console.error(err)

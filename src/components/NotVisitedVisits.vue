@@ -11,7 +11,7 @@
     filterable
     paginated
     :page-size="100"
-    @selection-changed="handleSelectionChange"
+    @selection-ids-changed="handleIdSelection"
   >
     <template #cell-debitors="{ item }">
       <div v-for="debitor in item.debitors" :key="debitor.ID">
@@ -42,6 +42,7 @@ const columns = [
 ]
 
 const notVisitedVisits = ref([])
+const selectedVisitIds = ref([])
 const error = ref(null)
 
 onMounted(async () => {
@@ -75,11 +76,8 @@ onMounted(async () => {
     console.error('Error fetching not visited visits:', err)
   }
 })
-const handleSelectionChange = (selectedItems) => {
-  //notVisitedVisits
-  const caseNumbers = selectedItems.map((item) => item.sagsnr)
-  console.log('Selected Case Numbers:', caseNumbers)
-  // You can handle the selection change here if needed
+const handleIdSelection = (selectedItems) => {
+  selectedVisitIds.value = selectedItems.map((item) => item)
 }
 </script>
 <style scoped>

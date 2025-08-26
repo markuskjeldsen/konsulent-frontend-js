@@ -2,47 +2,32 @@
   <!-- Error Display -->
   <div v-if="error" class="error">{{ error }}</div>
 
-  <!-- Visits Table -->
   <button @click="moveToStatus5">Press here to move selected visits to status 5</button>
-  <table class="visits-table">
-    <thead>
-      <tr>
-        <th>
-          <input type="checkbox" @change="toggleAll" :checked="allSelected" />
-        </th>
-        <th>db id</th>
-        <th>Sagsnr</th>
-        <th>Status</th>
-        <th>Address</th>
-        <th>Debitors</th>
-        <th>besøgs tidspnkt</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="visit in VisitStatus4" :key="visit.ID">
-        <td>
-          <input type="checkbox" v-model="selectedVisits" :value="visit.ID" />
-        </td>
-        <td>{{ visit.ID }}</td>
 
-        <td>{{ visit.sagsnr }}</td>
-        <td>{{ visit.status_id }}: {{ visit.status.text }}</td>
-        <td>{{ visit.address }}</td>
-        <td>
-          <div v-for="debitor in visit.debitors" :key="debitor.ID">
-            {{ debitor.name }}
-          </div>
-        </td>
-        <td>{{ visit.visit_response.actual_time.slice(0, 18) }}</td>
-      </tr>
-    </tbody>
-  </table>
+  <!-- Visits Table -->
+  <DataTable
+    :data="VisitStatus4"
+    :columns="columns"
+    selectable
+    filterable
+    paginated
+    :page-size="100"
+    @selection-ids-changed="handleIdSelection"
+  >
+    <template #cell-debitors="{ item }">
+      <div v-for="debitor in item.debitors" :key="debitor.ID">
+        {{ debitor.name }}
+      </div>
+    </template>
+    <template #cell-status="{ item }"> {{ item.status.ID }}: {{ item.status.text }} </template>
+  </DataTable>
   <button @click="requestPdfs">Press here to get the PDF</button>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import api from '@/utils/axios'
+import DataTable from './DataTable.vue'
 
 const selectedVisits = ref([])
 const VisitStatus4 = ref([])
@@ -50,6 +35,20 @@ const error = ref(null)
 const allSelected = computed(
   () => VisitStatus4.value.length > 0 && selectedVisits.value.length === VisitStatus4.value.length,
 )
+
+const columns = [
+  { key: 'sagsnr', label: 'Sags nummer', sortable: true, filterable: true },
+  { key: 'ID', label: 'besøgs id', sortable: true, filterable: true },
+  { key: 'debitors', label: 'Debitorer', sortable: true, filterable: false },
+  { key: 'address', label: 'Adresse', sortable: false, filterable: true },
+  { key: 'status', label: 'Status', sortable: false, filterable: true },
+  {
+    key: 'visit_response.actual_time',
+    label: 'Besøgs tidspunkt',
+    sortable: false,
+    filterable: false,
+  },
+]
 
 const fetchVisits = async () => {
   try {
@@ -100,8 +99,8 @@ function moveToStatus5() {
 }
 
 function requestPdfs() {
-  selectedVisits.value.forEach((id) => {
-    getPdf(id)
+  selectedVisits.value.forEach((visit) => {
+    getPdf(visit.ID)
   })
 }
 
@@ -139,6 +138,18 @@ const toggleAll = () => {
   } else {
     selectedVisits.value = VisitStatus4.value.map((visit) => visit.ID)
   }
+}
+
+function handleIdSelection(selectedIds) {
+  console.log('Selected IDs:', selectedIds)
+
+  selectedVisits.value = selectedIds
+    .map((id) => {
+      const visit = VisitStatus4.value.find((v) => v.ID === id)
+      return visit ? { ...visit } : null
+    })
+    .filter(Boolean)
+  console.log('Selected visits:', selectedVisits.value)
 }
 </script>
 

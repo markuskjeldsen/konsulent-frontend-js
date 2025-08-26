@@ -37,7 +37,11 @@
       <tbody>
         <tr v-for="(item, index) in paginatedData" :key="`${item.sagsnr}-${index}`">
           <td v-if="selectable">
-            <input type="checkbox" :value="index" v-model="selectedItems" />
+            <input
+              type="checkbox"
+              :checked="isSelected(item)"
+              @change="toggleSelection(item, $event.target.checked)"
+            />
           </td>
           <td v-for="column in columns" :key="column.key">
             <slot
@@ -74,9 +78,16 @@ const props = defineProps({
   pageSize: { type: Number, default: 10 },
 })
 
-const emit = defineEmits(['selection-changed'])
+const emit = defineEmits([
+  'selection-changed', // legacy: indices
+  'selection-ids-changed', // new: IDs
+  'update:selectedItems', // optional v-model for indices
+  'update:selectedVisitIds', // optional v-model for IDs
+])
 
 const selectedItems = ref([])
+const selectedVisitIds = ref([])
+
 const sortKey = ref('')
 const sortOrder = ref('asc')
 const filters = ref({})
@@ -130,8 +141,13 @@ const paginatedData = computed(() => {
   return filteredData.value.slice(start, start + props.pageSize)
 })
 
-const isSelectAll = computed(() => selectedItems.value.length === filteredData.value.length)
-
+// “all selected” should reflect the current view
+const isSelectAll = computed(() => {
+  const rows = filteredData.value // or paginatedData.value
+  if (!rows.length) return false
+  const idsOnView = rows.map((r) => r.ID)
+  return idsOnView.every((id) => selectedVisitIds.value.includes(id))
+})
 // Fix the sort function to handle column sortability
 const sort = (key) => {
   const column = props.columns.find((col) => col.key === key)
@@ -145,10 +161,54 @@ const sort = (key) => {
   }
 }
 
+// select/deselect all currently visible rows (use filteredData or paginatedData as you intend)
 const selectAll = (event) => {
-  selectedItems.value = event.target.checked
-    ? Array.from({ length: filteredData.value.length }, (_, i) => i)
-    : []
+  const checked = event.target.checked
+  const rows = filteredData.value // or paginatedData.value
+  const idsOnView = rows.map((r) => r.ID)
+
+  if (checked) {
+    // IDs
+    const idSet = new Set(selectedVisitIds.value.concat(idsOnView))
+    selectedVisitIds.value = Array.from(idSet)
+    // indices relative to current view (legacy behavior)
+    const viewIdx = rows.map((_, i) => i)
+    const idxSet = new Set(selectedItems.value.concat(viewIdx))
+    selectedItems.value = Array.from(idxSet)
+  } else {
+    // remove only those currently visible
+    const idsToRemove = new Set(idsOnView)
+    selectedVisitIds.value = selectedVisitIds.value.filter((id) => !idsToRemove.has(id))
+    // drop indices of the current view
+    const viewIdx = new Set(rows.map((_, i) => i))
+    selectedItems.value = selectedItems.value.filter((i) => !viewIdx.has(i))
+  }
+}
+
+function isSelected(item) {
+  return selectedVisitIds.value.includes(item.ID)
+}
+
+function toggleSelection(item, checked) {
+  // keep both arrays in sync atomically
+  let id
+  if (item.ID === undefined) {
+    id = String(item.sagsnr) + String(item.index)
+    console.log('has no ID')
+  } else {
+    id = item.ID
+    console.log('has ID')
+  }
+  console.log(id)
+  const idx = paginatedData.value.findIndex((x) => x.ID === id)
+
+  if (checked) {
+    if (!selectedVisitIds.value.includes(id)) selectedVisitIds.value.push(id)
+    if (!selectedItems.value.includes(idx)) selectedItems.value.push(idx)
+  } else {
+    selectedVisitIds.value = selectedVisitIds.value.filter((x) => x !== id)
+    selectedItems.value = selectedItems.value.filter((i) => i !== idx)
+  }
 }
 
 // Reset pagination when data changes
@@ -170,9 +230,17 @@ watch(
 
 // Add this watcher to emit selection changes
 watch(
-  selectedItems,
-  (newSelection) => {
-    emit('selection-changed', newSelection)
+  [selectedItems, selectedVisitIds],
+  ([items, ids]) => {
+    // legacy event (don’t break existing parents)
+    emit('selection-changed', items)
+
+    // new parallel event
+    emit('selection-ids-changed', ids)
+
+    // v-model-style updates (optional but recommended)
+    emit('update:selectedItems', items)
+    emit('update:selectedVisitIds', ids)
   },
   { deep: true },
 )
