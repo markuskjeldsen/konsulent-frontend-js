@@ -89,7 +89,9 @@ function revokeAll(urls) {
   urls.forEach((u) => {
     try {
       URL.revokeObjectURL(u)
-    } catch {}
+    } catch {
+      // Ignore errors when revoking object URLs
+    }
   })
 }
 
@@ -146,11 +148,6 @@ defineExpose({ clear })
 <style scoped>
 :root {
   --brand: rgb(99, 170, 219);
-  --brand-10: rgba(99, 170, 219, 0.1);
-  --brand-20: rgba(99, 170, 219, 0.2);
-  --text: #1f2a37;
-  --muted: #6b7280;
-  --bg-hover: #f7fbff;
 }
 
 .file-upload-wrap {
@@ -179,19 +176,15 @@ defineExpose({ clear })
   align-items: center;
 
   border: 2px dashed var(--brand);
-  background: var(--brand-10);
+  background: var(--brand);
   border-radius: 12px;
+  background-color: rgba(99, 169, 219, 0.315);
 
   padding: 20px 16px;
   text-align: left;
   color: var(--text);
   cursor: pointer;
   min-height: 72px;
-
-  transition:
-    background-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 80ms ease;
 }
 
 .file-upload__icon {
@@ -211,21 +204,8 @@ defineExpose({ clear })
   margin-top: 2px;
 }
 
-.file-upload:hover {
-  background-color: var(--brand-20);
-}
 .file-upload:active {
   transform: scale(0.99);
-}
-
-.file-input-sr:focus + .file-upload,
-.file-upload:focus,
-.file-upload:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 3px white,
-    0 0 0 6px var(--brand);
-  background-color: var(--bg-hover);
 }
 
 .is-disabled .file-upload {
