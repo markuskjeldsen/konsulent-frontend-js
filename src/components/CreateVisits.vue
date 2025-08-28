@@ -1,18 +1,22 @@
 <template>
   <div v-if="availableVisits.length > 0">
-    <button @click="createVisits" :disabled="selectedVisitsSagsnr.length === 0">
-      Create Visits
-    </button>
-    <p>Selected: {{ selectedVisitsSagsnr.length }} visits</p>
+    <button @click="createVisits" :disabled="isCreateDisabled">Create Visits</button>
+    <!-- visit_type selection drop down menu -->
+    <select v-model="selectedVisitType">
+      <option v-for="type in visitTypes" :key="type.ID" :value="type.ID">
+        {{ type.text }}
+      </option>
+    </select>
+    <p>Selected: {{ selectedVisitIds.length }} visits</p>
 
     <DataTable
       :data="availableVisits"
       :columns="columns"
       selectable
       filterable
-      paginated
       :page-size="100"
       @selection-changed="handleSelectionChange"
+      @selection-ids-changed="handleSelectionIdsChange"
     >
       <template #cell-debtors="{ item }">
         <div v-for="(debtor, dIndex) in item.debtors" :key="debtor.navn">
@@ -48,10 +52,26 @@ const columns = [
 
 const availableVisits = ref([])
 const selectedVisitsSagsnr = ref([])
+const selectedVisitIds = ref([])
 const selectedDebtors = ref({})
 const error = ref(null)
+const selectedVisitType = ref(null)
+const visitTypes = ref([])
 
-// Add this helper function
+visitTypes.value = onMounted(fetchVisitTypes)
+
+async function fetchVisitTypes() {
+  const { data } = await api.get('/visits/types')
+  visitTypes.value = data
+}
+
+const isCreateDisabled = computed(() => {
+  const hasSagsnr = (selectedVisitsSagsnr.value?.length ?? 0) > 0
+  const hasType = !!selectedVisitType.value // or just !!selectedVisitType.value if it’s a primitive
+  const result = !(hasSagsnr && hasType)
+  return result
+})
+
 const getVisitKey = (visit) => {
   // Create a unique key using sagsnr + adresse + postnr + first debtor name
   return `${visit.sagsnr}-${visit.adresse}-${visit.postnr}-${visit.debtors[0]?.navn || ''}`
@@ -81,15 +101,17 @@ const fetchAvailableVisits = async () => {
 
 const handleSelectionChange = (selectedSagsnrs) => {
   selectedVisitsSagsnr.value = selectedSagsnrs
-  console.log('handleselectionChange')
+}
+const handleSelectionIdsChange = (selectedIds) => {
+  selectedVisitIds.value = selectedIds
 }
 
 const createVisits = async () => {
   try {
-    const selectedVisits = selectedVisitsSagsnr.value
-      .map((index) => availableVisits.value[index])
-      .filter((visit) => visit)
-      .map((visit) => {
+    const Data = selectedVisitIds.value
+      .map((id) => {
+        const visit = availableVisits.value.find((v) => String(v.sagsnr) + String(v.index) === id)
+        if (!visit) return null
         const visitKey = getVisitKey(visit)
         return {
           ...visit,
@@ -98,8 +120,13 @@ const createVisits = async () => {
             : [],
         }
       })
+      .filter((v) => v !== null)
 
-    const response = await api.post('/visits/create', selectedVisits, {
+    const visitType = visitTypes.value.find((type) => type.ID === selectedVisitType.value)
+
+    const DataWithType = Data.map((line) => ({ ...line, visit_type: visitType }))
+
+    const response = await api.post('/visits/create', DataWithType, {
       responseType: 'blob',
     })
 
@@ -110,7 +137,8 @@ const createVisits = async () => {
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'visits' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.xlsx'
+    link.download =
+      'visits' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + visitType.text + '.xlsx'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

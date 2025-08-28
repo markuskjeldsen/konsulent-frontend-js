@@ -165,7 +165,13 @@ const sort = (key) => {
 const selectAll = (event) => {
   const checked = event.target.checked
   const rows = filteredData.value // or paginatedData.value
-  const idsOnView = rows.map((r) => r.ID)
+
+  let idsOnView
+  if (rows[0].ID === undefined) {
+    idsOnView = rows.map((r) => String(r.sagsnr) + String(r.index))
+  } else {
+    idsOnView = rows.map((r) => r.ID)
+  }
 
   if (checked) {
     // IDs
@@ -186,7 +192,16 @@ const selectAll = (event) => {
 }
 
 function isSelected(item) {
-  return selectedVisitIds.value.includes(item.ID)
+  selectedVisitIds
+
+  let id
+  if (item.ID === undefined) {
+    id = String(item.sagsnr) + String(item.index)
+  } else {
+    id = item.ID
+  }
+
+  return selectedVisitIds.value.includes(id)
 }
 
 function toggleSelection(item, checked) {
@@ -194,12 +209,9 @@ function toggleSelection(item, checked) {
   let id
   if (item.ID === undefined) {
     id = String(item.sagsnr) + String(item.index)
-    console.log('has no ID')
   } else {
     id = item.ID
-    console.log('has ID')
   }
-  console.log(id)
   const idx = paginatedData.value.findIndex((x) => x.ID === id)
 
   if (checked) {

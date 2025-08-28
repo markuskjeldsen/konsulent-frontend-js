@@ -45,26 +45,19 @@ function editUser(userId) {
     .catch((error) => {
       console.error('Error updating user:', error)
     })
-
-  api
-    .patch(`/users/${userId}`)
-    .then((response) => {
-      const updatedUser = response.data
-      const index = users.value.findIndex((user) => user.id === userId)
-      if (index !== -1) {
-        users.value[index] = updatedUser
-      }
-    })
-    .catch((error) => {
-      console.error('Error updating user:', error)
-    })
 }
 
 function deleteUser(userId) {
   // Logic to delete user
   console.log('Deleting user with ID:', userId)
+  const userData = users.value.find((user) => user.id === userId)
+  if (!userData) {
+    console.error('User not found:', userId)
+    return
+  }
+
   api.user
-    .delete(userId)
+    .delete(userId, { ...userData })
     .then(() => {
       users.value = users.value.filter((user) => user.id !== userId)
     })

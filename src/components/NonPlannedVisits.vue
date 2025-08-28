@@ -53,10 +53,11 @@ const error = ref()
 
 const columns = [
   { key: 'sagsnr', label: 'Sags nummer', sortable: true, filterable: true },
-  { key: 'ID', label: 'besøgsid', sortable: true, filterable: true },
-  { key: 'debitors', label: 'Debitorer', sortable: false, filterable: false },
+  { key: 'ID', label: 'besøgsid', sortable: true, filterable: false },
+  { key: 'debitors', label: 'Debitorer', sortable: false, filterable: true },
   { key: 'address', label: 'Adresse', sortable: false, filterable: true },
-  { key: 'status_id', label: 'StatusId', sortable: true, filterable: true },
+  { key: 'status_id', label: 'StatusId', sortable: false, filterable: false },
+  { key: 'type.text', label: 'Besøgs Type', sortable: true, filterable: true },
 ]
 
 const today = computed(() => new Date().toISOString().split('T')[0])
