@@ -47,6 +47,7 @@
 			label="Er betaling modtaget?"
 			name="payment_received"
 			v-model="fd.payment_received"
+			:required="true"
 		/>
 
 		<!-- Bilen skadet? -->
@@ -71,16 +72,22 @@
 				"
 			>
 				<label
-					>Hvor er bilen lige nu? (værksted,ude og køre)
+					>Hvor er bilen lige nu? (værksted,ude og køre eller ved ikke)
 					<input
 						v-model.trim="fd.asset_location"
 						type="text"
 						placeholder="Adresse/sted"
+						required
 					/>
 				</label>
 				<label
 					>Hvem kører den?
-					<input v-model.trim="fd.asset_driver" type="text" placeholder="Navn/telefon" />
+					<input
+						v-model.trim="fd.asset_driver"
+						type="text"
+						placeholder="Navn/telefon"
+						required
+					/>
 				</label>
 			</div>
 
@@ -89,6 +96,7 @@
 				label="Er bilen skadet?"
 				name="asset_damaged"
 				v-model="fd.asset_damaged"
+				:required="true"
 			/>
 
 			<!-- Bilen ryddet? -->
@@ -97,6 +105,7 @@
 				label="Er bilen ryddet?"
 				name="asset_clean"
 				v-model="fd.asset_clean"
+				:required="true"
 			/>
 
 			<!-- Nøgler givet/modtaget -->
@@ -104,6 +113,7 @@
 				label="Er nøgler givet til konsulenten?"
 				name="keys_given"
 				v-model="fd.keys_given"
+				:required="true"
 			/>
 		</div>
 
@@ -124,6 +134,7 @@
 					'Sommerhus',
 				]"
 				placeholder="Vælg boligtype"
+				:required="true"
 			/>
 			<!-- Boligen skadet? -->
 			<SelectField
@@ -133,6 +144,7 @@
 				v-model="fd.maintenance_status"
 				:options="['Velholdt', 'Forfalden']"
 				placeholder="Vælg boligstand"
+				:required="true"
 			/>
 
 			<!-- Ejerforhold -->
@@ -147,6 +159,7 @@
 					{ value: 'AndelsBolig', label: 'Andels' },
 				]"
 				placeholder="Vælg ejerforhold"
+				:required="true"
 			/>
 		</div>
 
@@ -159,31 +172,57 @@
 				v-model="fd.civil_status"
 				:options="['Married', 'Single', 'Cohabiting']"
 				placeholder="Vælg civil stand"
+				:required="true"
 			/>
 			<!--Children-->
-			<YesNo label="Har skyldner børn" name="has_children" v-model="hasChildren" />
+			<YesNo
+				label="Har skyldner børn"
+				name="has_children"
+				v-model="hasChildren"
+				:required="true"
+			/>
 			<fieldset v-if="hasChildren">
 				<legend>Hvor mange børn under 18 år</legend>
-				<input v-model.number="fd.children_under_18" type="number" min="0" step="1" />
+				<input
+					v-model.number="fd.children_under_18"
+					type="number"
+					min="0"
+					step="1"
+					required
+				/>
 			</fieldset>
 		</div>
 
 		<div class="economy" style="margin: 30px 0">
 			<!-- har skyldner et job? hvilket job? og hvad hvad tjener de?-->
-			<YesNo label="Har skyldner Job?" name="has_job" v-model="fd.has_work" />
-			<fieldset v-if="fd.has_work">
-				<legend>Hvilket job har skyldner? (hvis flere så sæt komma)</legend>
-				<input v-model.trim="fd.position" type="text" placeholder="Jobtitel" />
-			</fieldset>
-
-			<fieldset v-if="fd.has_work">
-				<legend>Hvad tjener skyldner ved at arbejde?</legend>
-				<input v-model.number="fd.salary" type="number" min="0" step="100" required />
-			</fieldset>
+			<YesNo
+				label="Har skyldner Job?"
+				name="has_job"
+				v-model="fd.has_work"
+				:required="true"
+			/>
+			<Transition name="fade-slide" appear>
+				<fieldset v-if="fd.has_work">
+					<legend>Hvilket job har skyldner? (hvis flere så sæt komma)</legend>
+					<input v-model.trim="fd.position" type="text" placeholder="Jobtitel" required />
+				</fieldset>
+			</Transition>
+			<Transition name="fade-slide" appear>
+				<fieldset v-if="fd.has_work">
+					<legend>Hvad tjener skyldner ved at arbejde?</legend>
+					<input v-model.number="fd.salary" type="number" min="0" step="100" required />
+				</fieldset>
+			</Transition>
 
 			<fieldset>
 				<legend>Månedlige indkomst med løn</legend>
-				<input v-model.number="fd.income_payment" type="number" min="0" step="100" />
+				<input
+					v-model.number="fd.income_payment"
+					type="number"
+					min="0"
+					step="100"
+					required
+				/>
 			</fieldset>
 			<fieldset>
 				<legend>Hvad har de så at rutte med når regningerne er betalt?</legend>
@@ -192,6 +231,7 @@
 					type="number"
 					min="0"
 					step="100"
+					required
 				/>
 			</fieldset>
 
@@ -240,7 +280,7 @@
 		<!-- Billeder af huset -->
 		<FileUpload
 			id="house-photo"
-			title="Billede af huset og postkasse"
+			title="Billede af huset og postkassen"
 			hint="Tryk for at vælge billeder (flere tilladt)"
 			icon="📷"
 			accept="image/*"
@@ -366,3 +406,24 @@ const filteredData = computed(() => {
 	return { ...visit, debitors }
 })
 </script>
+<style scoped>
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+	opacity: 0;
+	transform: translateY(-6px);
+}
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+	transition:
+		opacity 0.18s ease,
+		transform 0.18s ease;
+}
+
+/* Respect user settings */
+@media (prefers-reduced-motion: reduce) {
+	.fade-slide-enter-active,
+	.fade-slide-leave-active {
+		transition: none;
+	}
+}
+</style>
