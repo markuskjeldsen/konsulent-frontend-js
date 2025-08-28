@@ -19,7 +19,7 @@
     <td>{{ visit.visit_interval }}</td>
     <td>{{ visit.visit_time }}</td>
     <td class="checkmark-cell">
-      <span> {{ visit.status_id }}: {{ visit.status.text }}</span>
+      <span> {{ visit.status.text }} - {{ visit.type.text }}</span>
       <!-- v-if="visit.visit_response" class="checkmark"-->
     </td>
   </tr>

@@ -1,9 +1,9 @@
 <template>
   <div style="margin: 16px">
-    <h1>Købe kontrakt</h1>
+    <h1>leasing</h1>
     <p>
-      Fordi det er en købekontrakt så ejer skyldner bilen men de har ikke betalt de penge som de
-      skylder i den. prøv at få dem til at signere kontrakten.
+      Fordi det er en leasingaftale så ejer skyldner ikke bilen, derfor kan man bare tage bilen uden
+      kontrakt.
     </p>
   </div>
 
@@ -30,37 +30,6 @@
       </p>
     </div>
   </div>
-
-  <!--
-  const formData = reactive({
-  debitor_is_home: false,
-  civil_status: '',
-  payment_received: false,
-  asset_at_address: false,
-  asset_damaged: false,
-
-  asset_at_workshop: false,
-  asset_clean: false,
-  asset_location: '',
-  asset_comments: '',
-  odometer_km: 0,
-
-  has_work: false,
-  position: '',
-  salary: 0,
-  children_under_18: 0,
-  children_over_18: 0,
-  comments: '',
-  property_type: '',
-  maintenance_status: '',
-  ownership_status: '',
-  actual_latitude: '',
-  actual_longitude: '',
-  posAccuracy: '',
-  images: [],
-})
-
-  -->
 
   <form @submit.prevent="emit('submit')">
     <!-- debitor hjemme? -->
@@ -127,34 +96,12 @@
       :required="true"
     />
 
-    <!-- Salgsfuldmagt/kontrakt underskrevet -->
-
-    <YesNo
-      v-if="fd.debitor_is_home"
-      label="Er salgsfuldmagt underskrevet?"
-      name="sf_signed"
-      v-model="fd.sf_signed"
-      :required="true"
-    />
-
-    <YesNo
-      v-if="fd.debitor_is_home"
-      label="Er salgs-/eftergivelseaftale underskrevet?"
-      name="se_signed"
-      v-model="fd.se_signed"
-      :required="true"
-    />
-
     <!-- Billeder af bilen -->
-    <FileUpload
-      id="car-photo"
-      title="Billede af bilen"
-      hint="Tryk for at vælge billeder (flere tilladt)"
-      icon="📷"
-      accept="image/*"
-      :multiple="true"
-      @images="onFileChange"
-    />
+    <label class="file-upload"
+      >Billeder af bilen og postkassen
+      <br />
+      <input type="file" accept="image/*" multiple @change="onFileChange" />
+    </label>
     <br />
     <label
       >Kommentarer
@@ -167,25 +114,17 @@
   </form>
 
   <!--
-  købekontrakt tage bilen hvis underskrift (salgs fuldmagt)
-  mere målrettet mod aktivet istedet for personen
-  check bokse er bilen skadet? er den ryddet? hvor langt er bilen kørt lige nu?
-  billeder af bilen 
-  er bilen tilstede? er den på værkstedet? hvor er den lige nu? hvis ikke hjemme så hvor og hvem kører den?
-  er bilen tilskade? normale spørgsmål.
-  
-  
-  -->
-
-  <!--
-  <pre v-if="expanded" v-text="JSONData"></pre>
-  -->
-</template>
+leasing kan man bare tage bilen
+mere målrettet mod aktivet istedet for personen
+check bokse er bilen skadet? er den ryddet? hvor langt er bilen kørt lige nu?, 
+billeder af bilen 
+er bilen tilstede? er den på værkstedet? hvor er den lige nu? hvis ikke hjemme så hvor og hvem kører den?
+er bilen tilskade? normale spørgsmål.
+--></template>
 
 <script setup>
 import { computed, ref } from 'vue'
 import YesNo from '@/components/forms/YesNo.vue'
-import FileUpload from '@/components/forms/FileUpload.vue'
 
 const expanded = ref(false)
 const toggleExpanded = () => {

@@ -10,8 +10,6 @@
     :columns="columns"
     selectable
     filterable
-    paginated
-    :page-size="100"
     @selection-ids-changed="handleIdSelection"
   >
     <template #cell-debitors="{ item }">
@@ -41,13 +39,14 @@ const columns = [
   { key: 'ID', label: 'besøgs id', sortable: true, filterable: true },
   { key: 'debitors', label: 'Debitorer', sortable: true, filterable: false },
   { key: 'address', label: 'Adresse', sortable: false, filterable: true },
-  { key: 'status', label: 'Status', sortable: false, filterable: true },
   {
     key: 'visit_response.actual_time',
     label: 'Besøgs tidspunkt',
     sortable: false,
     filterable: false,
   },
+  { key: 'status', label: 'Status', sortable: false, filterable: true },
+  { key: 'type.text', label: 'Type', sortable: true, filterable: true },
 ]
 
 const fetchVisits = async () => {

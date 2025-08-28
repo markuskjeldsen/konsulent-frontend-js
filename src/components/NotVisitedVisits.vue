@@ -39,6 +39,7 @@ const columns = [
   { key: 'address', label: 'Adresse', sortable: false, filterable: true },
   { key: 'status', label: 'Status', sortable: true, filterable: true },
   { key: 'visit_date', label: 'Besøgs dato', sortable: true, filterable: true },
+  { key: 'type.text', label: 'Type', sortable: true, filterable: true },
 ]
 
 const notVisitedVisits = ref([])

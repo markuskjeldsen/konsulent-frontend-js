@@ -1,8 +1,43 @@
 <template>
   <div>
-    <PurchaseForm v-if="visitData?.type?.ID === 1" :visitData="visitData" />
+    <div v-if="!visitData">Indlæser...</div>
+    <div v-if="isSubmitting">Indsender...</div>
+
+    <PurchaseForm
+      v-if="visitData?.type?.ID === 1"
+      v-model:formData="formData"
+      :visitData="visitData"
+      @submit="() => submitForm(visitData.ID)"
+      @images="handleImageUpload"
+      :isSubmitting="isSubmitting"
+    />
+    <LeasingForm
+      v-if="visitData?.type?.ID === 2"
+      v-model:formData="formData"
+      :visitData="visitData"
+      @submit="() => submitForm(visitData.ID)"
+      @images="handleImageUpload"
+      :isSubmitting="isSubmitting"
+    />
+    <BlancoForm
+      v-if="visitData?.type?.ID === 3"
+      v-model:formData="formData"
+      :visitData="visitData"
+      @submit="() => submitForm(visitData.ID)"
+      @images="handleImageUpload"
+      :isSubmitting="isSubmitting"
+    />
+    <LetterForm
+      v-if="visitData?.type?.ID === 4"
+      v-model:formData="formData"
+      :visitData="visitData"
+      @submit="() => submitForm(visitData.ID)"
+      @images="handleImageUpload"
+      :isSubmitting="isSubmitting"
+    />
     <!--
-    leasing 2
+    /købekontrakt 1
+    /leasing 2
     blanco 3
     brev 4
     -->
@@ -13,6 +48,10 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PurchaseForm from '@/components/forms/PurchaseForm.vue'
+import LeasingForm from '@/components/forms/LeasingForm.vue'
+import BlancoForm from '@/components/forms/BlancoForm.vue'
+import LetterForm from '@/components/forms/LetterForm.vue'
+
 import api from '@/utils/axios'
 
 const router = useRouter()
@@ -25,12 +64,19 @@ const debtData = ref(null)
 const restgadoAntagetVal = ref(0)
 
 const formData = reactive({
-  debitor_is_home: false,
+  debitor_is_home: null,
   civil_status: '',
-  payment_received: false,
-  asset_at_address: false,
-  asset_damaged: false,
-  has_work: false,
+  payment_received: null,
+  asset_at_address: null,
+  asset_damaged: null,
+
+  asset_at_workshop: null,
+  asset_clean: null,
+  asset_location: '',
+  asset_comments: '',
+  odometer_km: 0,
+
+  has_work: null,
   position: '',
   salary: 0,
   children_under_18: 0,
@@ -50,10 +96,12 @@ onMounted(async () => {
     const response = await api.get('/visits/byId', {
       params: { id: ID },
     })
-    visitData.value = response.data.visit
+
     const debtInfo = await api.get('/visits/debt', {
       params: { VisitId: ID },
     })
+    visitData.value = response.data.visit
+    visitData.value.debt = debtInfo.data[0]
     debtData.value = debtInfo.data[0]
     await getLocation()
   } catch (error) {
@@ -65,7 +113,7 @@ onMounted(async () => {
   restgadoAntagetVal.value = antaget === 0 ? debtData.value.RestgeldVedBrev : antaget
 })
 
-const submitForm = async () => {
+async function submitForm(visitId) {
   if (formData.asset_at_address && formData.images.length === 0) {
     alert('Du skal tilføje mindst ét billede når køretøjet er til stede.')
     return
@@ -73,42 +121,33 @@ const submitForm = async () => {
 
   isSubmitting.value = true
   try {
-    // first submit the data
-    const jsonData = {
-      visit_id: ID,
-      actual_date: new Date().toISOString(),
-      actual_time: new Date().toTimeString(),
-      ...Object.fromEntries(Object.entries(formData).filter(([key]) => key !== 'images')),
+    const now = new Date()
+    const payload = {
+      visit_id: visitId,
+      actual_date: now.toISOString(),
+      actual_time: now.toTimeString().slice(0, 8),
+      ...Object.fromEntries(Object.entries(formData).filter(([k]) => k !== 'images')),
     }
 
-    const formResponse = await api.post('/visit-response/create', jsonData, {
-      headers: { 'Content-Type': 'application/json' },
-    })
+    const { data } = await api.post('/visit-response/create', payload)
 
-    // 2. Upload images one by one
-    if (formData.images.length > 0 && formResponse.data.ID) {
-      for (const [index, image] of formData.images.entries()) {
-        const imageFormData = new FormData()
-        imageFormData.append('visit_response_id', formResponse.data.ID)
-        imageFormData.append('image', image.file)
-        imageFormData.append('sequence', index + 1) // Optional: track order
-
-        const imageResponse = await api.post(
-          '/visit-response/' + formResponse.data.ID + '/images',
-          imageFormData,
-          {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          },
-        )
-        console.log(imageResponse)
+    if (formData.images.length && data.ID) {
+      for (let i = 0; i < formData.images.length; i++) {
+        const { file } = formData.images[i]
+        const fd = new FormData()
+        fd.append('visit_response_id', data.ID)
+        fd.append('image', file)
+        fd.append('sequence', i + 1)
+        const url = `/visit-response/${data.ID}/images`
+        await api.post(url, fd, { headers: { 'Content-Type': undefined } })
       }
     }
-
-    router.push('/visits')
-  } catch (error) {
-    console.error('Error submitting form:', error)
+  } catch (err) {
+    console.error('Error submitting form:', err)
+    alert('Noget gik galt. Prøv igen.')
   } finally {
     isSubmitting.value = false
+    sendBack()
   }
 }
 
@@ -180,22 +219,26 @@ const getLocation = () => {
   setTimeout(finish, 10 * 1000)
 }
 
-const handleImageUpload = (event) => {
-  const files = Array.from(event.target.files)
+// image picker in parent
+function handleImageUpload(e) {
+  const files = Array.from(e.target.files)
+  const maxMB = 10
+  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
   files.forEach((file) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      formData.images.push({
-        file: file,
-        preview: e.target.result,
-        name: file.name,
-      })
-    }
-    reader.readAsDataURL(file)
+    if (!allowed.includes(file.type)) return
+    if (file.size > maxMB * 1024 * 1024) return
+    formData.images.push({
+      file,
+      preview: URL.createObjectURL(file),
+      name: file.name,
+    })
   })
+  // e.target.value = '' // reset input
 }
 
-const removeImage = (index) => {
-  formData.images.splice(index, 1)
+function sendBack() {
+  const id = visitData.value.user.ID
+
+  router.push(`/auditor/${id}`)
 }
 </script>

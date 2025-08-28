@@ -262,7 +262,7 @@
   </div>
 </template>
 <script setup>
-import { defineProps, reactive, ref } from 'vue'
+import { defineProps, reactive } from 'vue'
 
 const formData = reactive({
   debitor_is_home: false,

@@ -19,7 +19,7 @@
           <th>Debitor Navn</th>
           <th>Besøgs interval</th>
           <th>Est. ank.</th>
-          <th>status</th>
+          <th>status and type</th>
         </tr>
       </thead>
       <tbody>

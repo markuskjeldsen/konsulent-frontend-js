@@ -1,9 +1,9 @@
 <template>
   <div style="margin: 16px">
-    <h1>Købe kontrakt</h1>
+    <h1>Blanco</h1>
     <p>
-      Fordi det er en købekontrakt så ejer skyldner bilen men de har ikke betalt de penge som de
-      skylder i den. prøv at få dem til at signere kontrakten.
+      Dette betyder at skylder ikke har pengene til at betale en lån som de har taget. Nu skal du
+      finde ud af hvor meget man kan forvente at få ud af dem.
     </p>
   </div>
 
@@ -30,37 +30,6 @@
       </p>
     </div>
   </div>
-
-  <!--
-  const formData = reactive({
-  debitor_is_home: false,
-  civil_status: '',
-  payment_received: false,
-  asset_at_address: false,
-  asset_damaged: false,
-
-  asset_at_workshop: false,
-  asset_clean: false,
-  asset_location: '',
-  asset_comments: '',
-  odometer_km: 0,
-
-  has_work: false,
-  position: '',
-  salary: 0,
-  children_under_18: 0,
-  children_over_18: 0,
-  comments: '',
-  property_type: '',
-  maintenance_status: '',
-  ownership_status: '',
-  actual_latitude: '',
-  actual_longitude: '',
-  posAccuracy: '',
-  images: [],
-})
-
-  -->
 
   <form @submit.prevent="emit('submit')">
     <!-- debitor hjemme? -->
@@ -127,34 +96,12 @@
       :required="true"
     />
 
-    <!-- Salgsfuldmagt/kontrakt underskrevet -->
-
-    <YesNo
-      v-if="fd.debitor_is_home"
-      label="Er salgsfuldmagt underskrevet?"
-      name="sf_signed"
-      v-model="fd.sf_signed"
-      :required="true"
-    />
-
-    <YesNo
-      v-if="fd.debitor_is_home"
-      label="Er salgs-/eftergivelseaftale underskrevet?"
-      name="se_signed"
-      v-model="fd.se_signed"
-      :required="true"
-    />
-
     <!-- Billeder af bilen -->
-    <FileUpload
-      id="car-photo"
-      title="Billede af bilen"
-      hint="Tryk for at vælge billeder (flere tilladt)"
-      icon="📷"
-      accept="image/*"
-      :multiple="true"
-      @images="onFileChange"
-    />
+    <label class="file-upload"
+      >Billeder af bilen og postkassen
+      <br />
+      <input type="file" accept="image/*" multiple @change="onFileChange" />
+    </label>
     <br />
     <label
       >Kommentarer
@@ -167,25 +114,51 @@
   </form>
 
   <!--
-  købekontrakt tage bilen hvis underskrift (salgs fuldmagt)
-  mere målrettet mod aktivet istedet for personen
-  check bokse er bilen skadet? er den ryddet? hvor langt er bilen kørt lige nu?
-  billeder af bilen 
-  er bilen tilstede? er den på værkstedet? hvor er den lige nu? hvis ikke hjemme så hvor og hvem kører den?
-  er bilen tilskade? normale spørgsmål.
-  
-  
-  -->
 
-  <!--
-  <pre v-if="expanded" v-text="JSONData"></pre>
-  -->
-</template>
+        <div class="form-section">
+          <h4>Boligen</h4>
+          <div class="checkbox-group">
+            Bolig type
+            <label for="boligType" class="checkbox-label"> bolig type</label>
+            <select id="boligType" v-model="formData.property_type" class="form-select">
+              <option value="Fritliggende">Fritliggende</option>
+              <option value="Byhus">Byhus</option>
+              <option value="Kolonihave">Kolonihave</option>
+              <option value="lejlighed">Lejlighed</option>
+              <option value="rækkehus">Rækkehus</option>
+              <option value="sommerhus">Sommerhus</option>
+            </select>
+            Stand
+            <label for="maintenance_status" class="checkbox-label"> bolig stand</label>
+            <select
+              id="maintenance_status"
+              v-model="formData.maintenance_status"
+              class="form-select"
+            >
+              <option value="god">God</option>
+              <option value="dårlig">Dårlig</option>
+            </select>
+            ownership_status
+            <label for="ownership_status" class="checkbox-label"> ejerforhold</label>
+            <select id="ownership_status" v-model="formData.ownership_status" class="form-select">
+              <option value="EjerBolig">Ejer</option>
+              <option value="LejerBolig">Lejer</option>
+              <option value="AndelsBolig">Andels</option>
+            </select>
+          </div>
+        </div>
+
+leasing kan man bare tage bilen
+mere målrettet mod aktivet istedet for personen
+check bokse er bilen skadet? er den ryddet? hvor langt er bilen kørt lige nu?, 
+billeder af bilen 
+er bilen tilstede? er den på værkstedet? hvor er den lige nu? hvis ikke hjemme så hvor og hvem kører den?
+er bilen tilskade? normale spørgsmål.
+--></template>
 
 <script setup>
 import { computed, ref } from 'vue'
 import YesNo from '@/components/forms/YesNo.vue'
-import FileUpload from '@/components/forms/FileUpload.vue'
 
 const expanded = ref(false)
 const toggleExpanded = () => {
