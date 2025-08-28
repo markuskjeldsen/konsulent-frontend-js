@@ -66,11 +66,21 @@
 		<div v-if="!fd.asset_at_address && fd.asset_at_address != undefined && fd.debitor_is_home">
 			<label
 				>Hvor er bilen lige nu? (værksted,ude og køre)
-				<input v-model.trim="fd.asset_location" type="text" placeholder="Adresse/sted" />
+				<input
+					v-model.trim="fd.asset_location"
+					type="text"
+					placeholder="Adresse/sted"
+					required
+				/>
 			</label>
 			<label
 				>Hvem kører den?
-				<input v-model.trim="fd.asset_driver" type="text" placeholder="Navn/telefon" />
+				<input
+					v-model.trim="fd.asset_driver"
+					type="text"
+					placeholder="Navn/telefon"
+					required
+				/>
 			</label>
 		</div>
 
@@ -92,7 +102,16 @@
 			v-model="fd.asset_clean"
 			:required="true"
 		/>
-
+		<div>
+			<label> Kommentarer til aktivet </label>
+			<br />
+			<textarea
+				v-model.trim="fd.asset_comments"
+				cols="50"
+				rows="4"
+				placeholder="Evt. noter"
+			></textarea>
+		</div>
 		<!-- Nøgler givet/modtaget -->
 		<YesNo
 			label="Er nøgler givet til konsulenten?"
@@ -113,7 +132,7 @@
 		/>
 		<br />
 		<label
-			>Kommentarer
+			>generelle kommentarer
 			<br />
 
 			<textarea
