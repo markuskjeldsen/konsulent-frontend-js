@@ -24,9 +24,11 @@
 		</div>
 		<button type="submit">tilføj</button>
 	</form>
-	<p v-if="password">
-		<strong>Bruger oprettet!</strong> Dit midlertidige kodeord er: {{ password }}
+	<p v-if="message">
+		<strong>{{ message }}</strong>
 	</p>
+
+	<br v-if="message" />
 </template>
 
 <script setup>
@@ -37,6 +39,7 @@ const username = ref('')
 const fullName = ref('')
 const rights = ref('user')
 const password = ref('') // To store the generated password
+const message = ref('')
 
 const createUser = () => {
 	// Logik for at oprette en bruger
@@ -46,6 +49,13 @@ const createUser = () => {
 		rights: rights.value,
 	})
 	// create a random password
+	if (!username.value || !fullName.value) {
+		message.value = 'Brugernavn og fulde navn er påkrævet.'
+		return
+	}
+	username.value = username.value.trim()
+	fullName.value = fullName.value.trim()
+
 	password.value = Math.random().toString(36).slice(-8)
 	console.log('Genereret kodeord:', password.value)
 	api.post('/register', {
@@ -60,10 +70,11 @@ const createUser = () => {
 			username.value = ''
 			fullName.value = ''
 			rights.value = 'user'
-			password.value = ''
 			// Eventuelt navigere til en anden side eller vise en succesmeddelelse
+			message.value = 'Bruger oprettet succesfuldt! Din kode er ' + password.value
 		})
 		.catch((error) => {
+			message.value = 'Fejl ved oprettelse af bruger: ' + error.response.data.error
 			console.error('Fejl ved oprettelse af bruger:', error)
 			// Håndter fejl, f.eks. vis en fejlmeddelelse
 		})

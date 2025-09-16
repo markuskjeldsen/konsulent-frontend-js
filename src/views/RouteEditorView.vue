@@ -1,12 +1,12 @@
 // RouteEditorView.vue //this page displays all the routes and allows editing them // can also add
 new ones
 <template>
-  <div class="card">
-    <div v-for="date in Object.keys(visitsByDate).sort()" :key="date" class="visit-group">
-      <h3>{{ date.slice(0, 10) }}</h3>
-      <VisitCard v-for="visit in visitsByDate[date]" :key="visit.sagsnr" :visit="visit" />
-    </div>
-  </div>
+	<div class="card">
+		<div v-for="date in Object.keys(visitsByDate).sort()" :key="date" class="visit-group">
+			<h3>{{ date.slice(0, 10) }}</h3>
+			<VisitCard v-for="visit in visitsByDate[date]" :key="visit.sagsnr" :visit="visit" />
+		</div>
+	</div>
 </template>
 
 <script setup>
@@ -23,28 +23,27 @@ const user = authStore.user
 const ID = Number(route.params.id)
 const auditor = ref()
 
-api
-  .get('/visit-response/all')
-  .then((response) => {
-    auditor.value = response.data.users.find((user) => user.ID === ID)
-  })
-  .catch((error) => {
-    console.error('Error fetching auditor data:', error)
-    // Fallback to mock data if API call fails
-  })
+api.get('/visit-response/all')
+	.then((response) => {
+		auditor.value = response.data.users.find((user) => user.ID === ID)
+	})
+	.catch((error) => {
+		console.error('Error fetching auditor data:', error)
+		// Fallback to mock data if API call fails
+	})
 
 const visitsByDate = computed(() => {
-  console.log('Computing visitsByDate for auditor:', auditor.value.visits)
-  const visits = auditor.value?.visits || []
-  // dateMap = { '2024-06-22': [visit1, visit2], '2024-06-23': [visit3]}
-  return visits.reduce((dateMap, visit) => {
-    const date = visit.visit_date
-    if (!dateMap[date]) {
-      dateMap[date] = []
-    }
-    dateMap[date].push(visit)
-    return dateMap
-  }, {})
+	console.log('Computing visitsByDate for auditor:', auditor.value.visits)
+	const visits = auditor.value?.visits || []
+	// dateMap = { '2024-06-22': [visit1, visit2], '2024-06-23': [visit3]}
+	return visits.reduce((dateMap, visit) => {
+		const date = visit.visit_date
+		if (!dateMap[date]) {
+			dateMap[date] = []
+		}
+		dateMap[date].push(visit)
+		return dateMap
+	}, {})
 })
 
 /** @typedef {Object} Visit

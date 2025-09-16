@@ -3,30 +3,17 @@
 	<fieldset class="yn">
 		<legend>{{ label }}</legend>
 
-		<label :for="idYes">
-			<input
-				:id="idYes"
-				type="radio"
-				:name="name"
-				:value="true"
-				v-model="val"
-				:required="required && val === null"
-				:disabled="disabled"
-			/>
-			Ja
-		</label>
-
-		<label :for="idNo">
-			<input
-				:id="idNo"
-				type="radio"
-				:name="name"
-				:value="false"
-				v-model="val"
-				:disabled="disabled"
-			/>
-			Nej
-		</label>
+		<BFormRadioGroup
+			:id="`${name}-group`"
+			v-model="val"
+			:options="options"
+			:name="name"
+			:disabled="disabled"
+			:required="required"
+			buttons
+			button-variant="outline-primary"
+			size="lg"
+		/>
 	</fieldset>
 </template>
 
@@ -35,8 +22,8 @@ import { computed } from 'vue'
 
 const props = defineProps({
 	label: { type: String, required: true },
-	name: { type: String, required: true }, // unique per question
-	modelValue: { type: [Boolean, null], default: null }, // use null initially
+	name: { type: String, required: true }, // must be unique per question
+	modelValue: { type: [Boolean, null], default: null }, // allow null until user chooses
 	required: { type: Boolean, default: false },
 	disabled: { type: Boolean, default: false },
 })
@@ -48,6 +35,8 @@ const val = computed({
 	set: (v) => emit('update:modelValue', v),
 })
 
-const idYes = `${props.name}-yes`
-const idNo = `${props.name}-no`
+const options = [
+	{ text: 'Ja', value: true },
+	{ text: 'Nej', value: false },
+]
 </script>

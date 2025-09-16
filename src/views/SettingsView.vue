@@ -1,17 +1,17 @@
 <template>
-  <div class="settings">
-    <aside>
-      <button @click="store.switchSection('createUser')">Create User</button>
-      <button @click="store.switchSection('updateUser')">Update User</button>
-      <br />
-      <br />
-      <br />
-      <section>
-        <CreateUser v-if="store.activeSection === 'createUser'" />
-        <UpdateUser v-if="store.activeSection === 'updateUser'" />
-      </section>
-    </aside>
-  </div>
+	<div class="settings">
+		<aside>
+			<button @click="store.switchSection('createUser')">Create User</button>
+			<button @click="store.switchSection('updateUser')">Update User</button>
+			<br />
+			<br />
+			<br />
+			<section>
+				<CreateUser v-if="store.activeSection === 'createUser'" />
+				<UpdateUser v-if="store.activeSection === 'updateUser'" />
+			</section>
+		</aside>
+	</div>
 </template>
 
 <script setup>
@@ -35,10 +35,10 @@ possible future additions
 
 <style>
 @media (min-width: 1024px) {
-  .settings {
-    background-color: azure;
-    min-height: 100vh;
-    display: flex;
-  }
+	.settings {
+		background-color: azure;
+		min-height: 100vh;
+		display: flex;
+	}
 }
 </style>
