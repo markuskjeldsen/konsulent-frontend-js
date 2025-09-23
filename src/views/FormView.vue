@@ -9,6 +9,7 @@
 			:visitData="visitData"
 			@submit="() => submitForm(visitData.ID)"
 			@images="handleImageUpload"
+			@remove-image="removeImageAt"
 			:isSubmitting="isSubmitting"
 		/>
 		<LeasingForm
@@ -17,6 +18,7 @@
 			:visitData="visitData"
 			@submit="() => submitForm(visitData.ID)"
 			@images="handleImageUpload"
+			@remove-image="removeImageAt"
 			:isSubmitting="isSubmitting"
 		/>
 		<BlancoForm
@@ -25,6 +27,7 @@
 			:visitData="visitData"
 			@submit="() => submitForm(visitData.ID)"
 			@images="handleImageUpload"
+			@remove-image="removeImageAt"
 			:isSubmitting="isSubmitting"
 		/>
 		<LetterForm
@@ -33,6 +36,7 @@
 			:visitData="visitData"
 			@submit="() => submitForm(visitData.ID)"
 			@images="handleImageUpload"
+			@remove-image="removeImageAt"
 			:isSubmitting="isSubmitting"
 		/>
 		<!--
@@ -44,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PurchaseForm from '@/components/forms/PurchaseForm.vue'
 import LeasingForm from '@/components/forms/LeasingForm.vue'
@@ -58,6 +62,7 @@ const route = useRoute()
 const ID = Number(route.params.id)
 const visitData = ref(null)
 const isSubmitting = ref(false)
+const sumbitAbort = ref(null)
 const isCapturingLocation = ref(false)
 const debtData = ref(null)
 const restgadoAntagetVal = ref(0)
@@ -90,6 +95,17 @@ const formData = reactive({
 	images: [],
 })
 
+function removeImageAt(i) {
+	const [removed] = formData.images.splice(i, 1)
+	if (removed?.preview) {
+		try {
+			URL.revokeObjectURL(removed.preview)
+		} catch {
+			console.log('an error ocurred')
+		}
+	}
+}
+
 onMounted(async () => {
 	try {
 		const response = await api.get('/visits/byId', {
@@ -117,7 +133,6 @@ async function submitForm(visitId) {
 		alert('Du skal tilføje mindst ét billede når køretøjet er til stede.')
 		return
 	}
-
 	isSubmitting.value = true
 	try {
 		const now = new Date()
@@ -127,7 +142,6 @@ async function submitForm(visitId) {
 			actual_time: now.toTimeString().slice(0, 8),
 			...Object.fromEntries(Object.entries(formData).filter(([k]) => k !== 'images')),
 		}
-
 		const { data } = await api.post('/visit-response/create', payload)
 
 		if (formData.images.length && data.ID) {
@@ -232,8 +246,24 @@ function handleImageUpload(e) {
 			name: file.name,
 		})
 	})
-	// e.target.value = '' // reset input
+	e.target.value = '' // allow same-file reselect
 }
+
+// Revoke object URLs for removed images to avoid leaks
+let lastImages = []
+watch(
+	() => formData.images.map((i) => i.preview),
+	(nv, ov) => {
+		const removed = (ov || []).filter((p) => !nv.includes(p))
+		removed.forEach((p) => {
+			try {
+				URL.revokeObjectURL(p)
+			} catch {}
+		})
+		lastImages = nv
+	},
+	{ immediate: true },
+)
 
 function sendBack() {
 	const id = visitData.value.user.ID

@@ -1,38 +1,42 @@
 <template>
-  <div>
-    <h3>These visits have not yet been planned</h3>
+	<div>
+		<h3>These visits have not yet been planned</h3>
 
-    <!-- Selection Form -->
-    <form @submit.prevent="handlePlanVisits" class="planning-form">
-      <div class="form-row">
-        <button type="submit" :disabled="!selectedVisits.length || isPlanning">
-          Plan Selected Visits
-        </button>
-      </div>
-    </form>
+		<!-- Selection Form -->
+		<form @submit.prevent="handlePlanVisits" class="planning-form">
+			<div class="form-row">
+				<button type="submit" :disabled="!selectedVisits.length || isPlanning">
+					Plan Selected Visits
+				</button>
+			</div>
+		</form>
+		<!-- Selection Form -->
+		<button @click="handleDeleteVisits" :disabled="!selectedVisits.length || isPlanning">
+			Delete Selected visits
+		</button>
 
-    <!-- Error Display -->
-    <div v-if="error" class="error">{{ error }}</div>
+		<!-- Error Display -->
+		<div v-if="error" class="error">{{ error }}</div>
 
-    <DataTable
-      :data="plannedVisits"
-      :columns="columns"
-      selectable
-      filterable
-      paginated
-      :page-size="100"
-      @selection-changed="handleSelectionChange"
-    >
-      <template #cell-debitors="{ item }">
-        <div v-for="(debtors, dIndex) in item.debitors" :key="debtors.name">
-          "{{ debtors?.name }}"
-        </div>
-      </template>
-      <template #cell-adresse="{ item }">
-        {{ item.adresse }}, {{ item.postnr }} {{ item.bynavn }}
-      </template>
-    </DataTable>
-  </div>
+		<DataTable
+			:data="plannedVisits"
+			:columns="columns"
+			selectable
+			filterable
+			paginated
+			:page-size="100"
+			@selection-changed="handleSelectionChange"
+		>
+			<template #cell-debitors="{ item }">
+				<div v-for="(debtors, dIndex) in item.debitors" :key="debtors.name">
+					"{{ debtors?.name }}"
+				</div>
+			</template>
+			<template #cell-adresse="{ item }">
+				{{ item.adresse }}, {{ item.postnr }} {{ item.bynavn }}
+			</template>
+		</DataTable>
+	</div>
 </template>
 
 <script setup>
@@ -52,121 +56,157 @@ const plannedVisits = ref([])
 const error = ref()
 
 const columns = [
-  { key: 'sagsnr', label: 'Sags nummer', sortable: true, filterable: true },
-  { key: 'ID', label: 'besøgsid', sortable: true, filterable: false },
-  { key: 'debitors', label: 'Debitorer', sortable: false, filterable: true },
-  { key: 'address', label: 'Adresse', sortable: false, filterable: true },
-  { key: 'status_id', label: 'StatusId', sortable: false, filterable: false },
-  { key: 'type.text', label: 'Besøgs Type', sortable: true, filterable: true },
+	{ key: 'sagsnr', label: 'Sags nummer', sortable: true, filterable: true },
+	{ key: 'ID', label: 'besøgsid', sortable: true, filterable: false },
+	{ key: 'debitors', label: 'Debitorer', sortable: false, filterable: true },
+	{ key: 'address', label: 'Adresse', sortable: false, filterable: true },
+	{ key: 'status_id', label: 'StatusId', sortable: false, filterable: false },
+	{ key: 'type.text', label: 'Besøgs Type', sortable: true, filterable: true },
 ]
 
 const today = computed(() => new Date().toISOString().split('T')[0])
 const allSelected = computed(
-  () =>
-    plannedVisits.value.length > 0 && selectedVisits.value.length === plannedVisits.value.length,
+	() =>
+		plannedVisits.value.length > 0 &&
+		selectedVisits.value.length === plannedVisits.value.length,
 )
 
 // Toggle all checkboxes
 const toggleAll = () => {
-  if (allSelected.value) {
-    selectedVisits.value = []
-  } else {
-    selectedVisits.value = plannedVisits.value.map((visit) => visit.ID)
-  }
+	if (allSelected.value) {
+		selectedVisits.value = []
+	} else {
+		selectedVisits.value = plannedVisits.value.map((visit) => visit.ID)
+	}
 }
 
 // Update toggleDebtorSelection function
 function toggleDebtorSelection(visitId, dIndex) {
-  const current = selectedDebtors.value[visitId] || []
-  if (current.includes(dIndex)) {
-    selectedDebtors.value[visitId] = current.filter((idx) => idx !== dIndex)
-  } else {
-    selectedDebtors.value[visitId] = [...current, dIndex]
-  }
+	const current = selectedDebtors.value[visitId] || []
+	if (current.includes(dIndex)) {
+		selectedDebtors.value[visitId] = current.filter((idx) => idx !== dIndex)
+	} else {
+		selectedDebtors.value[visitId] = [...current, dIndex]
+	}
+}
+
+async function handleDeleteVisits() {
+	if (!authStore.isAuthenticated) {
+		error.value = 'Du skal være logget ind'
+		authStore.toLoginScreen()
+		return
+	}
+
+	try {
+		isPlanning.value = true
+		error.value = ''
+
+		const ops = selectedVisits.value.map((v) =>
+			api.delete('/visit/byId', { params: { id: v } }),
+		)
+
+		const results = await Promise.allSettled(ops)
+
+		results.forEach((r, i) => {
+			if (r.status !== 'fulfilled') {
+				console.error('Failed to delete', selectedVisits.value[i].id, r.reason)
+			}
+		})
+
+		// Reset selections and refetch data
+		selectedVisits.value = []
+		selectedUser.value = ''
+		selectedDate.value = ''
+		await fetchCreatedVisits()
+
+		console.log('Planning successful')
+	} catch (err) {
+		console.error('Planning failed:', err)
+	}
 }
 
 const fetchCreatedVisits = async () => {
-  try {
-    const response = await api.get('/visits/create')
-    plannedVisits.value = response.data.data
+	try {
+		const response = await api.get('/visits/create')
+		plannedVisits.value = response.data.data
 
-    // Initialize selectedDebtors using visit IDs
-    selectedDebtors.value = {}
-    plannedVisits.value.forEach((visit) => {
-      selectedDebtors.value[visit.ID] = visit.debitors.map((_, i) => i)
-    })
+		// Initialize selectedDebtors using visit IDs
+		selectedDebtors.value = {}
+		plannedVisits.value.forEach((visit) => {
+			selectedDebtors.value[visit.ID] = visit.debitors.map((_, i) => i)
+		})
 
-    error.value = null
-  } catch (err) {
-    console.error(err)
-    error.value = 'Failed to fetch available visits'
-    plannedVisits.value = []
-  }
+		error.value = null
+	} catch (err) {
+		console.error(err)
+		error.value = 'Failed to fetch available visits'
+		plannedVisits.value = []
+	}
 }
 
 const handlePlanVisits = async () => {
-  if (!authStore.isAuthenticated) {
-    error.value = 'Du skal være logget ind'
-    authStore.toLoginScreen()
-    return
-  }
+	if (!authStore.isAuthenticated) {
+		error.value = 'Du skal være logget ind'
+		authStore.toLoginScreen()
+		return
+	}
 
-  try {
-    isPlanning.value = true
-    error.value = ''
+	try {
+		isPlanning.value = true
+		error.value = ''
 
-    const planData = {
-      visitIds: selectedVisits.value,
-      userId: selectedUser.value,
-      date: selectedDate.value,
-    }
-    console.log(planData)
-    const response = await api.post('/visits/visitfile', planData, { responseType: 'blob' })
+		const planData = {
+			visitIds: selectedVisits.value,
+			userId: selectedUser.value,
+			date: selectedDate.value,
+		}
+		console.log(planData)
+		const response = await api.post('/visits/visitfile', planData, { responseType: 'blob' })
 
-    const blob = new Blob([response.data], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'visits' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.xlsx'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+		const blob = new Blob([response.data], {
+			type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		})
+		const url = window.URL.createObjectURL(blob)
+		const link = document.createElement('a')
+		link.href = url
+		link.download = 'visits' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.xlsx'
+		document.body.appendChild(link)
+		link.click()
+		document.body.removeChild(link)
+		window.URL.revokeObjectURL(url)
 
-    // Reset selections and refetch data
-    selectedVisits.value = []
-    selectedUser.value = ''
-    selectedDate.value = ''
-    await fetchCreatedVisits()
+		// Reset selections and refetch data
+		selectedVisits.value = []
+		selectedUser.value = ''
+		selectedDate.value = ''
+		await fetchCreatedVisits()
 
-    console.log('Planning successful:', response.data)
-  } catch (err) {
-    console.error('Planning failed:', err)
-    if (err.response?.status === 401) {
-      authStore.logout()
-      error.value = 'Session udløbet. Log ind igen.'
-    } else {
-      error.value = err.response?.data?.message || 'Planning failed. Try again.'
-    }
-  } finally {
-    isPlanning.value = false
-  }
+		console.log('Planning successful:', response.data)
+	} catch (err) {
+		console.error('Planning failed:', err)
+		if (err.response?.status === 401) {
+			authStore.logout()
+			error.value = 'Session udløbet. Log ind igen.'
+		} else {
+			error.value = err.response?.data?.message || 'Planning failed. Try again.'
+		}
+	} finally {
+		isPlanning.value = false
+	}
 }
 // Fetch users function (add this)
 const fetchUsers = async () => {
-  try {
-    const response = await api.get('/users') // Adjust endpoint
-    users.value = response.data.users
-  } catch (err) {
-    console.error('Failed to fetch users:', err)
-  }
+	try {
+		const response = await api.get('/users') // Adjust endpoint
+		users.value = response.data.users
+	} catch (err) {
+		console.error('Failed to fetch users:', err)
+	}
 }
 
 const handleSelectionChange = (selectedIndices) => {
-  selectedVisits.value = selectedIndices.map((index) => plannedVisits.value[index].ID)
-  console.log('handleselectionChange')
+	selectedVisits.value = selectedIndices.map((index) => plannedVisits.value[index].ID)
+	console.log('handleselectionChange')
 }
 
 // Call fetchUsers on component mount
@@ -177,44 +217,44 @@ fetchCreatedVisits()
 
 <style scoped>
 .visits-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+	width: 100%;
+	border-collapse: collapse;
+	margin-top: 1rem;
 }
 
 .visits-table th,
 .visits-table td {
-  border: 1px solid #ddd;
-  padding: 12px;
-  text-align: left;
+	border: 1px solid #ddd;
+	padding: 12px;
+	text-align: left;
 }
 
 .visits-table th {
-  background-color: #f5f5f5;
-  font-weight: bold;
+	background-color: #f5f5f5;
+	font-weight: bold;
 }
 
 .visit-row {
-  cursor: pointer;
-  transition: background-color 0.2s;
+	cursor: pointer;
+	transition: background-color 0.2s;
 }
 
 .visit-row:hover {
-  background-color: #f9f9f9;
+	background-color: #f9f9f9;
 }
 
 .error {
-  color: red;
-  padding: 10px;
-  background-color: #fee;
-  border: 1px solid #fcc;
-  border-radius: 4px;
-  margin: 10px 0;
+	color: red;
+	padding: 10px;
+	background-color: #fee;
+	border: 1px solid #fcc;
+	border-radius: 4px;
+	margin: 10px 0;
 }
 
 .no-data {
-  text-align: center;
-  padding: 20px;
-  color: #666;
+	text-align: center;
+	padding: 20px;
+	color: #666;
 }
 </style>

@@ -8,9 +8,14 @@
 	</div>
 
 	<div style="margin: 16px">
-		<p class="auditor-name" @click="toggleExpanded">
-			Debitor: {{ filteredData?.debitors?.[0]?.name ?? '—' }}
-		</p>
+		<button
+			class="debitor-toggle"
+			@click="toggleExpanded"
+			:aria-expanded="expanded ? 'true' : 'false'"
+			aria-controls="debitor-panel"
+		>
+			<span>Debitor: {{ filteredData?.debitors?.[0]?.name ?? '—' }}</span>
+		</button>
 		<div v-if="expanded && filteredData?.debitors?.length">
 			<p>Advopro_debitor_id: {{ filteredData.debitors[0]?.Advopro_debitor_id ?? '—' }}</p>
 			<p>
@@ -124,11 +129,15 @@
 		<FileUpload
 			id="car-photo"
 			title="Billede af bilen og postkassen"
-			hint="Tryk for at vælge billeder (flere tilladt)"
+			hint="Tryk for at tilføje ét billede ad gangen"
 			icon="📷"
 			accept="image/*"
-			:multiple="true"
-			@images="onFileChange"
+			:multiple="false"
+			:append-mode="true"
+			:files="formData.images"
+			@images="(e) => emit('images', e)"
+			@remove="removeAt"
+			@update:files="onUpdateFiles"
 		/>
 		<br />
 		<label
@@ -170,16 +179,19 @@ const props = defineProps({
 	formData: { type: Object, required: true },
 	isSubmitting: { type: Boolean, default: false },
 })
-const emit = defineEmits(['update:formData', 'submit', 'images'])
+const emit = defineEmits(['update:formData', 'submit', 'images', 'remove-image'])
+function removeAt(index) {
+	// do not mutate here; let the owner (FormView) revoke URLs
+	emit('remove-image', index)
+}
+function onUpdateFiles(next) {
+	emit('update:formData', { ...props.formData, images: next })
+}
 
 const fd = computed({
 	get: () => props.formData,
 	set: (v) => emit('update:formData', v),
 })
-
-function onFileChange(e) {
-	emit('images', e)
-}
 
 function calculateAge(birthday) {
 	if (!birthday) return ''
@@ -202,3 +214,21 @@ const filteredData = computed(() => {
 	return { ...visit, debitors }
 })
 </script>
+<style scoped>
+.debitor-toggle {
+	background: none;
+	border: 0;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+}
+.debitor-toggle::after {
+	content: ' ▸'; /* closed */
+}
+.debitor-toggle[aria-expanded='true']::after {
+	content: ' ▾'; /* open */
+}
+.debitor-toggle:hover {
+	text-decoration: underline;
+}
+</style>
