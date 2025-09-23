@@ -5,6 +5,8 @@
 			Dette betyder at skyldner ikke har pengene til at betale en lån som de har taget. Nu
 			skal du finde ud af hvor meget man kan forvente at få ud af dem.
 		</p>
+		<p>{{ filteredData?.debt?.Fordringsbeskrivelser }}</p>
+		<p>{{ filteredData?.debt?.Sagsfremstillinger }}</p>
 	</div>
 
 	<div style="margin: 16px">

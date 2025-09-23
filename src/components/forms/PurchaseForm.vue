@@ -5,6 +5,8 @@
 			Fordi det er en købekontrakt så ejer skyldner bilen men de har ikke betalt de penge som
 			de skylder i den. prøv at få dem til at signere kontrakten.
 		</p>
+		<p>{{ filteredData?.debt?.Fordringsbeskrivelser }}</p>
+		<p>{{ filteredData?.debt?.Sagsfremstillinger }}</p>
 	</div>
 
 	<div style="margin: 16px">

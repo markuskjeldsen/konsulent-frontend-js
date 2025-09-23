@@ -5,6 +5,8 @@
 			Fordi det er en leasingaftale så ejer skyldner ikke bilen, derfor kan man bare tage
 			bilen uden kontrakt.
 		</p>
+		<p>{{ filteredData?.debt?.Fordringsbeskrivelser }}</p>
+		<p>{{ filteredData?.debt?.Sagsfremstillinger }}</p>
 	</div>
 
 	<div style="margin: 16px">
