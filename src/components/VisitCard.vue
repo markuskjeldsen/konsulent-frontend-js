@@ -1,28 +1,28 @@
 <template>
-  <tr style="width: 100%">
-    <td v-if="!visit.visit_response && visit.status_id == 3 && isToday">
-      <button class="visit-btn" @click="open">Besøg</button>
-    </td>
-    <td v-else-if="visit.status_id == 4">
-      <button class="visit-btn" @click="edit">Rediger</button>
-    </td>
-    <td v-else>
-      <button class="visit-btn">Afvent</button>
-    </td>
+	<tr style="width: 100%">
+		<td v-if="!visit.visit_response && visit.status_id == 3 && isToday">
+			<button class="visit-btn" @click="open">Besøg</button>
+		</td>
+		<td v-else-if="visit.status_id == 4">
+			<button class="visit-btn" @click="edit">Rediger</button>
+		</td>
+		<td v-else>
+			<button class="visit-btn">Afvent</button>
+		</td>
 
-    <td>{{ visit.address }}</td>
-    <td>
-      <span v-for="(debitor, i) in visit.debitors" :key="debitor.id">
-        {{ debitor.name }}<span v-if="i < visit.debitors.length - 1">, </span>
-      </span>
-    </td>
-    <td>{{ visit.visit_interval }}</td>
-    <td>{{ visit.visit_time }}</td>
-    <td class="checkmark-cell">
-      <span> {{ visit.status.text }} - {{ visit.type.text }}</span>
-      <!-- v-if="visit.visit_response" class="checkmark"-->
-    </td>
-  </tr>
+		<td>{{ visit.address }}</td>
+		<td>
+			<span v-for="(debitor, i) in visit.debitors" :key="debitor.id">
+				{{ debitor.name }}<span v-if="i < visit.debitors.length - 1">, </span>
+			</span>
+		</td>
+		<td>{{ visit.visit_interval }}</td>
+		<td>{{ visit.visit_time }}</td>
+		<td class="checkmark-cell">
+			<span> {{ visit.status.text }} - {{ visit.type.text }}</span>
+			<!-- v-if="visit.visit_response" class="checkmark"-->
+		</td>
+	</tr>
 </template>
 
 <script setup>
@@ -30,41 +30,41 @@ import router from '@/router'
 import { computed } from 'vue'
 
 const props = defineProps({
-  visit: Object,
+	visit: Object,
 })
 const isToday = computed(() => {
-  const today = new Date()
-  const visitDate = new Date(props.visit.visit_date)
+	const today = new Date()
+	const visitDate = new Date(props.visit.visit_date)
 
-  return (
-    today.getFullYear() === visitDate.getFullYear() &&
-    today.getMonth() === visitDate.getMonth() &&
-    today.getDate() === visitDate.getDate()
-  )
+	return (
+		today.getFullYear() === visitDate.getFullYear() &&
+		today.getMonth() === visitDate.getMonth() &&
+		today.getDate() === visitDate.getDate()
+	)
 })
 
 function open() {
-  console.log('/form:' + props.visit.ID)
-  router.push({
-    name: 'form',
-    params: { id: props.visit.ID },
-  })
+	console.log('/form:' + props.visit.ID)
+	router.push({
+		name: 'form',
+		params: { id: props.visit.ID },
+	})
 }
 function edit() {
-  // You can emit here if needed
-  console.log(props.visit)
+	// You can emit here if needed
+	console.log(props.visit)
 }
 </script>
 
 <style scoped>
 .visit-btn {
-  min-width: 60px;
+	min-width: 60px;
 }
 /* Optional: checkmark cell alignment */
 .checkmark {
-  color: green;
-  font-size: 1.5em;
-  font-weight: bold;
-  justify-self: auto;
+	color: green;
+	font-size: 1.5em;
+	font-weight: bold;
+	justify-self: auto;
 }
 </style>
