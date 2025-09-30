@@ -35,4 +35,4 @@ package-lock.json
 *.tsbuildinfo
 
 
-.env
+.env*

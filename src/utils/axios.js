@@ -5,7 +5,7 @@ import axios from 'axios'
 // Create an Axios instance
 const api = axios.create({
 	// VITE_API_BASE_URL_LOCAL
-	baseURL: import.meta.env.VITE_API_BASE_URL_LOCAL,
+	baseURL: import.meta.env.VITE_API_BASE_URL,
 
 	timeout: 60 * 1000, // 60 seconds timeout
 	withCredentials: true, // <<< this makes axios send/receive cookies
