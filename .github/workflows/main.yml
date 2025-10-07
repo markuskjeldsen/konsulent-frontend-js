@@ -49,6 +49,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
             TARGET_DIR="/srv/besogsbasen/server/public"
             echo "Ensuring target directory exists: ${TARGET_DIR}"
@@ -58,3 +59,5 @@ jobs:
             echo "Copying new frontend files to ${TARGET_DIR}"
             rsync -avz --delete ./dist/ "${TARGET_DIR}/"
             echo "deployment complete"
+            echo "Restarting backend service..."
+            /srv/besogsbasen/server/run.sh restart
