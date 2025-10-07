@@ -10,26 +10,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: checkout code # step 1: get code from repo
-      uses: actions/checkout@v4
+      - name: checkout code # step 1: get code from repo
+        uses: actions/checkout@v4
 
-    - name: Setup Nodejs # prep nodejs env
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Nodejs # prep nodejs env
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-    - name: install dependencies # installing dependensices
-      run: npm install
+      - name: install dependencies # installing dependensices
+        run: npm install
 
-    - name: build
-      run: npm run build
-      env:
-        VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-        VUE_FRONTEND_PORT: ${{ secrets.VUE_FRONTEND_PORT }}
-      
-    - name: upload artifacts
-      uses: actions/upload-artifact@v4
-      with: 
-        name: frontend-dist
-        path: dist
+      - name: build
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VUE_FRONTEND_PORT: ${{ secrets.VUE_FRONTEND_PORT }}
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+
+      - name: deploy to server with ssh
+        uses: appleboy/ssh-action@v1.0.1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            TARGET_DIR="/srv/besogsbasen/server/public"
+            echo "Ensuring target directory exists: ${TARGET_DIR}"
+            mkdir -p "${TARGET_DIR}"
+            echo "Clearing existing frontend files"
+            find "${TARGET_DIR}" -mindepth 1 -delete || true
+            echo "Copying new frontend files to ${TARGET_DIR}"
+            rsync -avz --delete ./dist/ "${TARGET_DIR}/"
+            echo "deployment complete"
