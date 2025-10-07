@@ -139,6 +139,7 @@
 					'Lejlighed',
 					'Rækkehus',
 					'Sommerhus',
+					'Andet',
 				]"
 				placeholder="Vælg boligtype"
 				:required="true"
@@ -149,13 +150,14 @@
 				input-label="bolig stand"
 				name="boligStand"
 				v-model="fd.maintenance_status"
-				:options="['Velholdt', 'Forfalden']"
+				:options="['Velholdt', 'Forfalden', 'Ukendt']"
 				placeholder="Vælg boligstand"
 				:required="true"
 			/>
 
 			<!-- Ejerforhold -->
 			<SelectField
+				v-if="fd.debitor_is_home"
 				label="Ejerforhold"
 				inputLabel="ejerforhold"
 				name="ownership_status"
@@ -164,20 +166,21 @@
 					{ value: 'EjerBolig', label: 'Ejer' },
 					{ value: 'LejerBolig', label: 'Lejer' },
 					{ value: 'AndelsBolig', label: 'Andels' },
+					{ value: 'Andet', label: 'Andet' },
 				]"
 				placeholder="Vælg ejerforhold"
 				:required="true"
 			/>
 		</div>
 
-		<div class="family" style="margin: 30px 0">
+		<div class="family" style="margin: 30px 0" v-if="fd.debitor_is_home">
 			<!--Civil stand-->
 			<SelectField
 				label="Civil stand"
 				inputLabel="Civil stand"
 				name="CivilStand"
 				v-model="fd.civil_status"
-				:options="['Married', 'Single', 'Cohabiting']"
+				:options="['Married', 'Single', 'Cohabiting', 'Andet']"
 				placeholder="Vælg civil stand"
 				:required="true"
 			/>
@@ -200,7 +203,7 @@
 			</fieldset>
 		</div>
 
-		<div class="economy" style="margin: 30px 0">
+		<div class="economy" style="margin: 30px 0" v-if="fd.debitor_is_home">
 			<!-- har skyldner et job? hvilket job? og hvad hvad tjener de?-->
 			<YesNo
 				label="Har skyldner Job?"

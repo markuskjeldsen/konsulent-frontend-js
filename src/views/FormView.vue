@@ -66,6 +66,7 @@ const sumbitAbort = ref(null)
 const isCapturingLocation = ref(false)
 const debtData = ref(null)
 const restgadoAntagetVal = ref(0)
+const startTime = ref(null)
 
 const formData = reactive({
 	debitor_is_home: null,
@@ -107,6 +108,8 @@ function removeImageAt(i) {
 }
 
 onMounted(async () => {
+	startTime.value = new Date()
+
 	try {
 		const response = await api.get('/visits/byId', {
 			params: { id: ID },
@@ -115,17 +118,25 @@ onMounted(async () => {
 		const debtInfo = await api.get('/visits/debt', {
 			params: { VisitId: ID },
 		})
-		visitData.value = response.data.visit
-		visitData.value.debt = debtInfo.data[0]
-		debtData.value = debtInfo.data[0]
+		if (debtInfo?.data == null) {
+			alert('Kunne ikke finde besøget')
+			visitData.value = response.data.visit
+			visitData.value.debt = null
+			debtData.value = null
+		} else {
+			visitData.value = response.data.visit
+			visitData.value.debt = debtInfo?.data[0]
+			debtData.value = debtInfo?.data[0]
+		}
+
 		await getLocation()
 	} catch (error) {
 		console.error('Error fetching visit:', error)
 		// Handle error appropriately
 	}
 
-	const antaget = parseFloat(debtData.value.RestgeldAntaget)
-	restgadoAntagetVal.value = antaget === 0 ? debtData.value.RestgeldVedBrev : antaget
+	const antaget = parseFloat(debtData.value?.RestgeldAntaget)
+	restgadoAntagetVal.value = antaget === 0 ? debtData.value?.RestgeldVedBrev : antaget
 })
 
 async function submitForm(visitId) {
@@ -136,10 +147,13 @@ async function submitForm(visitId) {
 	isSubmitting.value = true
 	try {
 		const now = new Date()
+		// Calculate duration in milliseconds
+		const duration = now - startTime.value
 		const payload = {
 			visit_id: visitId,
 			actual_date: now.toISOString(),
 			actual_time: now.toTimeString().slice(0, 8),
+			duration: duration,
 			...Object.fromEntries(Object.entries(formData).filter(([k]) => k !== 'images')),
 		}
 		const { data } = await api.post('/visit-response/create', payload)
@@ -165,6 +179,7 @@ async function submitForm(visitId) {
 }
 
 const getLocation = () => {
+	console.log('getting location')
 	// Fallback coordinates (e.g., a default location like Copenhagen, Denmark)
 	const fallbackLocation = {
 		latitude: '0',
