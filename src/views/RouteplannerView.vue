@@ -1,5 +1,7 @@
 <template>
 	<div v-if="isAllowed">
+		<!-- if user is on a phone or tablet then dont show anything below -->
+
 		<button @click="PlannerStore.switchTab('createVisits')">Create Visits</button>
 		<button @click="PlannerStore.switchTab('nonPlannedVisits')">Created Visits</button>
 		<button @click="PlannerStore.switchTab('planVisits')">Plan Visits</button>
@@ -54,4 +56,3 @@ const isAllowed = computed(() => {
 
 const getActiveComponent = computed(() => components[PlannerStore.activeTab])
 </script>
-

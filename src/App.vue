@@ -4,7 +4,7 @@
 		<span v-if="authStore.isAuthenticated" @click="$router.push('/')">
 			<img :src="logo" alt="DAI logo" />
 		</span>
-		<nav>
+		<nav v-if="!isMobile">
 			<RouterLink v-if="authStore.isAuthenticated" to="/">Home</RouterLink>
 			<RouterLink v-if="authStore.isAuthenticated" to="/routeplanner"
 				>Rute planlægning</RouterLink
@@ -35,6 +35,14 @@ const HasPrivilege = () => {
 	}
 	return allowed
 }
+
+const isMobile = computed(() => {
+	const userAgent = navigator.userAgent
+	const isOnPhone = /android|iphone|ipod|kindle|mobile|phone|windows phone|blackberry/i.test(
+		userAgent,
+	)
+	return isOnPhone
+})
 </script>
 
 GLOBAL STYLE
