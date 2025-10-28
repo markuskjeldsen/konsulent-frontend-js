@@ -119,7 +119,7 @@ onMounted(async () => {
 			params: { VisitId: ID },
 		})
 		if (debtInfo?.data == null) {
-			alert('Kunne ikke finde besøget')
+			alert('Kunne ikke finde besøget hos advopro')
 			visitData.value = response.data.visit
 			visitData.value.debt = null
 			debtData.value = null

@@ -3,7 +3,7 @@
 		<h1>Købe kontrakt</h1>
 		<p>
 			Fordi det er en købekontrakt så ejer skyldner bilen men de har ikke betalt de penge som
-			de skylder i den. prøv at få dem til at signere kontrakten.
+			de skylder i den. prøv at få dem til at underskrive kontrakten.
 		</p>
 		<p>{{ filteredData?.debt?.Fordringsbeskrivelser }}</p>
 		<p>{{ filteredData?.debt?.Sagsfremstillinger }}</p>

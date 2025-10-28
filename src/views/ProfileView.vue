@@ -63,7 +63,6 @@ personal statistics
   
 */
 import { ref, reactive, watch, computed } from 'vue'
-import router from '@/router'
 import { useAuthStore } from '@/stores/auth.js'
 import api from '@/utils/axios.js'
 
@@ -144,7 +143,7 @@ async function UpdatePassword() {
 async function updateDetails() {
 	try {
 		// Make API call to update the details
-		await api.patch('/user', { ...editedUser })
+		await api.patch('/users/' + authStore.user.ID, { ...editedUser })
 		// Update store (assume backend returns the updated user)
 		authStore.fetchUser()
 		feedback.value = 'Profil opdateret!'
