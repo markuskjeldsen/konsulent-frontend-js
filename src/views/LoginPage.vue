@@ -27,8 +27,14 @@ const username = ref('')
 const password = ref('')
 const errorMessage = ref('')
 const authStore = useAuthStore()
+const isServerOnline = ref(true)
 
 async function handleLogin() {
+	checkServer()
+	if (!isServerOnline.value) {
+		errorMessage.value = 'Cannot connect to backend. Please try again later.'
+		return
+	}
 	console.log('Login attempt')
 	errorMessage.value = ''
 	try {
@@ -52,15 +58,19 @@ function handleChange() {
 	errorMessage.value = ''
 }
 
+function checkServer() {
+	api.get('/health')
+		.then(() => {
+			isServerOnline.value = true
+			errorMessage.value = ''
+		})
+		.catch(() => {
+			isServerOnline.value = false
+			errorMessage.value = 'Cannot connect to backend. Please try again later.'
+		})
+}
+
 onMounted(async () => {
-	try {
-		await api.get('/health') // Use a valid endpoint, e.g. '/health' or '/status'
-		// Backend is up, optionally clear error if you want:
-		errorMessage.value = ''
-		console.log('the backend is online')
-	} catch (err) {
-		console.log(err)
-		errorMessage.value = 'Cannot connect to backend'
-	}
+	checkServer()
 })
 </script>

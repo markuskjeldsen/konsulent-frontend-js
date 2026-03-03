@@ -220,19 +220,16 @@
 			<Transition name="fade-slide" appear>
 				<fieldset v-if="fd.has_work">
 					<legend>Hvad tjener skyldner ved at arbejde?</legend>
-					<input v-model.number="fd.salary" type="number" min="0" step="100" required />
+					<input v-model.number="fd.salary" type="number" min="0" required />
 				</fieldset>
 			</Transition>
 
 			<fieldset>
-				<legend>Månedlige indkomst med løn</legend>
-				<input
-					v-model.number="fd.income_payment"
-					type="number"
-					min="0"
-					step="100"
-					required
-				/>
+				<legend>
+					offentlige yderlser (kontanthjælp, førtidspension, folkepension, SU, dagpenge,
+					etc.)
+				</legend>
+				<input v-model.number="fd.income_payment" type="number" min="0" required />
 			</fieldset>
 			<fieldset>
 				<legend>Hvad har de så at rutte med når regningerne er betalt?</legend>
@@ -240,7 +237,6 @@
 					v-model.number="fd.monthly_disposable_amount"
 					type="number"
 					min="0"
-					step="100"
 					required
 				/>
 			</fieldset>
@@ -264,8 +260,8 @@
 				<label for="creditor">Kreditor</label>
 				<input v-model.number="fd.creditor" type="text" />
 				<label for="debt_amount">Gældsbeløb</label>
-				<input v-model.number="fd.debt_amount" type="number" min="0" step="100" />
-				<label for="settlement">Forlig</label>
+				<input v-model.number="fd.debt_amount" type="number" min="0" />
+				<label for="settlement">Forlig (tekst)</label>
 				<input v-model.number="fd.settlement" type="text" />
 			</fieldset>
 			<fieldset
@@ -281,8 +277,8 @@
 				<label for="creditor_2">Kreditor</label>
 				<input v-model.number="fd.creditor_2" type="text" />
 				<label for="debt_amount_2">Gældsbeløb</label>
-				<input v-model.number="fd.debt_amount_2" type="number" min="0" step="100" />
-				<label for="settlement_2">Forlig</label>
+				<input v-model.number="fd.debt_amount_2" type="number" min="0" />
+				<label for="settlement_2">Forlig (tekst)</label>
 				<input v-model.number="fd.settlement_2" type="text" />
 			</fieldset>
 		</div>

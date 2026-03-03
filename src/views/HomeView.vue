@@ -1,15 +1,15 @@
 <template>
-  <div>
-    <h1>Velkommen {{ authStore.user.name }}</h1>
-    <br />
-    <br />
+	<div>
+		<h1>Velkommen {{ authStore.user.name }}</h1>
+		<br />
+		<br />
 
-    <div class="card-grid">
-      <div v-for="user in users" :key="user.ID" class="card-container">
-        <KonsulentCard :konsulent="user" />
-      </div>
-    </div>
-  </div>
+		<div class="card-grid">
+			<div v-for="user in users" :key="user.ID" class="card-container">
+				<KonsulentCard :konsulent="user" />
+			</div>
+		</div>
+	</div>
 </template>
 
 <script setup>
@@ -22,37 +22,38 @@ const authStore = useAuthStore()
 
 const users = ref([])
 
-api
-  .get('/visit-response/all')
-  .then((response) => {
-    users.value = response.data.users.filter((user) => user.ID !== 1)
-  })
-  .catch((error) => {
-    console.error('Failed to fetch users:', error)
-  })
+api.get('/visit-response/all')
+	.then((response) => {
+		users.value = response.data.users.filter((user) => user.ID !== 1)
+	})
+	.catch((error) => {
+		console.error('Failed to fetch users:', error)
+	})
 </script>
 
 <style>
 .card-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
 }
 
 .card-container {
-  width: fit-content;
-  flex-basis: calc((100% - 48px) / 4); /* Adjust this value to change the number of cards per row */
+	width: fit-content;
+	flex-basis: calc(
+		(100% - 48px) / 4
+	); /* Adjust this value to change the number of cards per row */
 }
 
 @media (max-width: 768px) {
-  .card-container {
-    flex-basis: calc((100% - 16px) / 2);
-  }
+	.card-container {
+		flex-basis: calc((100% - 16px) / 2);
+	}
 }
 
 @media (max-width: 480px) {
-  .card-container {
-    flex-basis: 100%;
-  }
+	.card-container {
+		flex-basis: 100%;
+	}
 }
 </style>

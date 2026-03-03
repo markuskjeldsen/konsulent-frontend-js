@@ -87,6 +87,11 @@
 			name="payment_received"
 			v-model="fd.payment_received"
 		/>
+		<!-- Hvis betaling hvor meget? Go backend payment_received_amount -->
+		<fieldset v-if="fd.payment_received">
+			<legend>Hvor meget er betalingen på? (kr.)</legend>
+			<input v-model.number="fd.payment_received_amount" type="number" min="0" required />
+		</fieldset>
 
 		<!-- Bilen til stede på adressen? -->
 		<YesNo
@@ -104,12 +109,16 @@
 		<!-- Bilen på værksted? -->
 		<div v-if="!fd.asset_at_address && fd.asset_at_address != undefined && fd.debitor_is_home">
 			<label
-				>Hvor er bilen lige nu? (værksted,ude og køre)
-				<input v-model.trim="fd.asset_location" type="text" placeholder="Adresse/sted" />
+				>Hvor er bilen lige nu?
+				<input
+					v-model.trim="fd.asset_location"
+					type="text"
+					placeholder="værksted, ude og køre"
+				/>
 			</label>
 			<label
 				>Hvem kører den?
-				<input v-model.trim="fd.asset_driver" type="text" placeholder="Navn/telefon" />
+				<input v-model.trim="fd.asset_driver" type="text" placeholder="Navn, telefon" />
 			</label>
 		</div>
 
