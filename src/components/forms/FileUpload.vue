@@ -140,24 +140,7 @@ function clear() {
 	emit('input-cleared')
 }
 
-function removeAt(index) {
-	const list = props.files?.length ? [...props.files] : [...filesLocal.value]
-	const [removed] = list.splice(index, 1)
-	if (!props.files?.length) {
-		filesLocal.value = list
-		if (removed?.preview) revokeAll([removed.preview])
-		lastLocalUrls = list.map((p) => p.preview)
-	}
-	if (removed?.preview && props.files?.length) {
-		// parent-owned URLs: revoke safely (you created them here)
-		try {
-			URL.revokeObjectURL(removed.preview)
-		} catch {
-			console.log('an error happened')
-		}
-	}
-	emit('update:files', list)
-}
+// end of clear
 
 /* If parent-controlled files change, clean up old local URLs (we don’t own parent URLs) */
 watch(

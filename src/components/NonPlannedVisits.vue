@@ -28,7 +28,7 @@
 			@selection-changed="handleSelectionChange"
 		>
 			<template #cell-debitors="{ item }">
-				<div v-for="(debtors, dIndex) in item.debitors" :key="debtors.name">
+				<div v-for="debtors in item.debitors" :key="debtors.name">
 					"{{ debtors?.name }}"
 				</div>
 			</template>
@@ -41,7 +41,7 @@
 
 <script setup>
 import api from '@/utils/axios'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth' // Adjust import path
 import DataTable from '@/components/DataTable.vue'
 
@@ -63,32 +63,6 @@ const columns = [
 	{ key: 'status_id', label: 'StatusId', sortable: false, filterable: false },
 	{ key: 'type.text', label: 'Besøgs Type', sortable: true, filterable: true },
 ]
-
-const today = computed(() => new Date().toISOString().split('T')[0])
-const allSelected = computed(
-	() =>
-		plannedVisits.value.length > 0 &&
-		selectedVisits.value.length === plannedVisits.value.length,
-)
-
-// Toggle all checkboxes
-const toggleAll = () => {
-	if (allSelected.value) {
-		selectedVisits.value = []
-	} else {
-		selectedVisits.value = plannedVisits.value.map((visit) => visit.ID)
-	}
-}
-
-// Update toggleDebtorSelection function
-function toggleDebtorSelection(visitId, dIndex) {
-	const current = selectedDebtors.value[visitId] || []
-	if (current.includes(dIndex)) {
-		selectedDebtors.value[visitId] = current.filter((idx) => idx !== dIndex)
-	} else {
-		selectedDebtors.value[visitId] = [...current, dIndex]
-	}
-}
 
 async function handleDeleteVisits() {
 	if (!authStore.isAuthenticated) {

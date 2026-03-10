@@ -28,14 +28,6 @@ import logo from '@/assets/DAI-logo.png'
 
 const authStore = useAuthStore()
 
-const HasPrivilege = () => {
-	let allowed = false
-	if (authStore.user?.role === 'admin') {
-		allowed = true
-	}
-	return allowed
-}
-
 const isMobile = computed(() => {
 	const userAgent = navigator.userAgent
 	const isOnPhone = /android|iphone|ipod|kindle|mobile|phone|windows phone|blackberry/i.test(

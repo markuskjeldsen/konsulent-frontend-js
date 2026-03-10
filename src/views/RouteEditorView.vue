@@ -18,7 +18,6 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const authStore = useAuthStore()
-const user = authStore.user
 
 const ID = Number(route.params.id)
 const auditor = ref()

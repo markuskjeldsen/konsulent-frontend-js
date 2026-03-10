@@ -62,7 +62,6 @@ const route = useRoute()
 const ID = Number(route.params.id)
 const visitData = ref(null)
 const isSubmitting = ref(false)
-const sumbitAbort = ref(null)
 const isCapturingLocation = ref(false)
 const debtData = ref(null)
 const restgadoAntagetVal = ref(0)
@@ -265,7 +264,6 @@ function handleImageUpload(e) {
 }
 
 // Revoke object URLs for removed images to avoid leaks
-let lastImages = []
 watch(
 	() => formData.images.map((i) => i.preview),
 	(nv, ov) => {
@@ -273,9 +271,10 @@ watch(
 		removed.forEach((p) => {
 			try {
 				URL.revokeObjectURL(p)
-			} catch {}
+			} catch {
+				// Ignore errors
+			}
 		})
-		lastImages = nv
 	},
 	{ immediate: true },
 )
