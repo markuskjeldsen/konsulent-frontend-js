@@ -69,31 +69,120 @@ const startTime = ref(null)
 
 const formData = reactive({
 	debitor_is_home: null,
-	civil_status: '',
+	civil_status: null,
 	payment_received: null,
 	asset_at_address: null,
 	asset_damaged: null,
 
 	asset_at_workshop: null,
 	asset_clean: null,
-	asset_location: '',
-	asset_comments: '',
-	odometer_km: 0,
+	asset_location: null,
+	asset_driver: null,
+	asset_comments: null,
+	odometer_km: null,
 
 	has_work: null,
-	position: '',
-	salary: 0,
-	children_under_18: 0,
-	children_over_18: 0,
-	comments: '',
-	property_type: '',
-	maintenance_status: '',
-	ownership_status: '',
-	actual_latitude: '',
-	actual_longitude: '',
-	posAccuracy: '',
+	position: null,
+	salary: null,
+	children_under_18: null,
+	children_over_18: null,
+	comments: null,
+	property_type: null,
+	maintenance_status: null,
+	ownership_status: null,
+	actual_latitude: null,
+	actual_longitude: null,
+	posAccuracy: null,
 	images: [],
+	payment_received_amount: null,
+	has_children: null,
+	sf_signed: null,
+	se_signed: null,
+	keys_given: null,
+	additional_debt: null,
+	creditor: null,
+	debt_amount: null,
+	settlement: null,
+	creditor_2: null,
+	debt_amount_2: null,
+	settlement_2: null,
+	income_payment: null,
+	monthly_disposable_amount: null,
 })
+
+watch(
+	() => formData.asset_at_address,
+	(newVal) => {
+		if (newVal === false || newVal === null) {
+			formData.odometer_km = null
+			formData.asset_clean = null
+			formData.asset_location = null
+			formData.asset_driver = null
+		}
+	},
+)
+
+watch(
+	() => formData.debitor_is_home,
+	(newVal) => {
+		if (newVal === false || newVal === null) {
+			formData.civil_status = null
+			formData.ownership_status = null
+			formData.has_work = null
+			formData.has_children = null
+			formData.sf_signed = null
+			formData.se_signed = null
+			formData.position = null
+			formData.salary = null
+			formData.children_under_18 = null
+			formData.asset_damaged = null
+			formData.asset_location = null
+			formData.asset_driver = null
+		}
+	},
+)
+
+watch(
+	() => formData.has_work,
+	(newVal) => {
+		if (newVal === false || newVal === null) {
+			formData.position = null
+			formData.salary = null
+		}
+	},
+)
+
+watch(
+	() => formData.payment_received,
+	(newVal) => {
+		if (newVal === false || newVal === null) {
+			formData.payment_received_amount = null
+		}
+	},
+)
+
+watch(
+	() => formData.has_children,
+	(newVal) => {
+		if (newVal === false || newVal === null) {
+			formData.children_under_18 = null
+		}
+	},
+)
+
+watch(
+	() => formData.additional_debt,
+	(newVal) => {
+		if (newVal === false || newVal === null) {
+			formData.creditor = null
+			formData.debt_amount = null
+			formData.settlement = null
+			formData.creditor_2 = null
+			formData.debt_amount_2 = null
+			formData.settlement_2 = null
+		}
+	},
+)
 
 function removeImageAt(i) {
 	const [removed] = formData.images.splice(i, 1)

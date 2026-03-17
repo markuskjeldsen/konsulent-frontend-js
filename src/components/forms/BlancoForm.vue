@@ -188,10 +188,10 @@
 			<YesNo
 				label="Har skyldner børn"
 				name="has_children"
-				v-model="hasChildren"
+				v-model="fd.has_children"
 				:required="true"
 			/>
-			<fieldset v-if="hasChildren">
+			<fieldset v-if="fd.has_children">
 				<legend>Hvor mange børn under 18 år</legend>
 				<input
 					v-model.number="fd.children_under_18"
@@ -244,11 +244,11 @@
 			<YesNo
 				label="Har skyldner anden gæld?"
 				name="has_additional_debt"
-				v-model="additionalDebt"
+				v-model="fd.additional_debt"
 				:required="true"
 			/>
 			<fieldset
-				v-if="additionalDebt"
+				v-if="fd.additional_debt"
 				style="
 					display: grid;
 					grid-template-columns: 12rem 1fr;
@@ -265,7 +265,7 @@
 				<input v-model.number="fd.settlement" type="text" />
 			</fieldset>
 			<fieldset
-				v-if="additionalDebt"
+				v-if="fd.additional_debt"
 				style="
 					display: grid;
 					grid-template-columns: 12rem 1fr;
@@ -373,8 +373,6 @@ import FileUpload from '@/components/forms/FileUpload.vue'
 import SelectField from '@/components/forms/SelectField.vue'
 
 const expanded = ref(false)
-const hasChildren = ref(undefined)
-const additionalDebt = ref(false)
 
 const toggleExpanded = () => {
 	expanded.value = !expanded.value
