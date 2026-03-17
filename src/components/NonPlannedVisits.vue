@@ -25,7 +25,7 @@
 			filterable
 			paginated
 			:page-size="100"
-			@selection-changed="handleSelectionChange"
+			@selection-ids-changed="handleSelectionChange"
 		>
 			<template #cell-debitors="{ item }">
 				<div v-for="debtors in item.debitors" :key="debtors.name">
@@ -178,9 +178,8 @@ const fetchUsers = async () => {
 	}
 }
 
-const handleSelectionChange = (selectedIndices) => {
-	selectedVisits.value = selectedIndices.map((index) => plannedVisits.value[index].ID)
-	console.log('handleselectionChange')
+const handleSelectionChange = (selectedIds) => {
+	selectedVisits.value = selectedIds
 }
 
 // Call fetchUsers on component mount
