@@ -96,6 +96,8 @@ async function handleDeleteVisits() {
 		console.log('Planning successful')
 	} catch (err) {
 		console.error('Planning failed:', err)
+	} finally {
+		isPlanning.value = false
 	}
 }
 

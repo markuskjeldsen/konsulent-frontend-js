@@ -10,6 +10,7 @@
 		<p>Selected: {{ selectedVisitIds.length }} visits</p>
 
 		<DataTable
+			ref="dataTableRef"
 			:data="availableVisits"
 			:columns="columns"
 			selectable
@@ -51,6 +52,7 @@ const columns = [
 ]
 
 const availableVisits = ref([])
+const dataTableRef = ref(null)
 const selectedVisitsSagsnr = ref([])
 const selectedVisitIds = ref([])
 const selectedDebtors = ref({})
@@ -148,6 +150,10 @@ const createVisits = async () => {
 		link.click()
 		document.body.removeChild(link)
 		window.URL.revokeObjectURL(url)
+
+		if (dataTableRef.value) {
+			dataTableRef.value.clearSelection()
+		}
 	} catch (err) {
 		console.error('Failed to create visits:', err)
 		// Consider adding user feedback here
