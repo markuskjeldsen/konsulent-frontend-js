@@ -23,10 +23,10 @@ The DataTable component (`src/components/DataTable.vue`) emits two different sel
 
 | Component            | Event                    | Status     |
 | -------------------- | ------------------------ | ---------- |
-| NonPlannedVisits.vue | `@selection-ids-changed` | ✅ Fixed   |
+| NonPlannedVisits.vue | `@selection-ids-changed` | ✅ Correct |
 | NotVisitedVisits.vue | `@selection-ids-changed` | ✅ Correct |
 | ReviewVisits.vue     | `@selection-ids-changed` | ✅ Correct |
-| PlannedVisits.vue    | Direct button click      | ✅ Correct |
+| PlannedVisits.vue    | `@selection-ids-changed` | ✅ Correct |
 
 ## Correct Selection Handler Pattern
 
@@ -129,3 +129,41 @@ const dataTableRef = ref(null)
 // After some action:
 dataTableRef.value?.clearSelection()
 ```
+
+## Standard Mass Action Pattern
+
+Components with bulk operations (send letter, delete, etc.) follow this pattern:
+
+```js
+// Parent component
+const selectedVisitIds = ref([])
+const dataTableRef = ref(null)
+
+const handleSelectionChange = (selectedIds) => {
+  selectedVisitIds.value = selectedIds
+}
+
+async function handleSendLetter() {
+  if (!selectedVisitIds.value.length) return
+
+  try {
+    const ops = selectedVisitIds.value.map((id) =>
+      api.post('/visit/letterSent', null, { params: { id } }),
+    )
+    await Promise.allSettled(ops)
+
+    selectedVisitIds.value = []
+    dataTableRef.value?.clearSelection()
+    // Refresh data...
+  } catch (err) {
+    console.error('Error sending letters:', err)
+  }
+}
+```
+
+Components with this pattern:
+
+- **PlannedVisits.vue**: Mass send letter, Mass delete
+- **NotVisitedVisits.vue**: Mass delete
+- **NonPlannedVisits.vue**: Mass delete, Plan selected
+- **ReviewVisits.vue**: Mass move to status 5, Mass download PDF
