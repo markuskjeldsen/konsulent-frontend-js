@@ -1,237 +1,192 @@
 <template>
 	<div>
-		<h2>Planned Visits</h2>
-		<div v-if="visits.length > 0">
-			<p>
-				Selected Visits: {{ displayedSelectedVisits }}
-				<span v-if="selectedVisitIds.length > 10">
-					... and {{ selectedVisitIds.length - 10 }} more
-				</span>
-			</p>
-			<table>
-				<thead>
-					<tr>
-						<th>
-							<!--  <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll($event)" />  -->
-						</th>
-						<th>Konsulent</th>
-						<th>Visit ID</th>
-						<th>Debitors</th>
-						<th>Address</th>
-						<th>Visit day</th>
-						<th>Visit Time</th>
-						<th>Visit Interval</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="visit in visits" :key="visit.ID">
-						<td v-if="editingId === visit.ID">
-							<button @click="saveEdit(visit.ID)">Save</button>
-							<button @click="cancelEdit">Cancel</button>
-						</td>
-						<td v-else>
-							<button @click="markAsSent(visit.ID)">LetterSent</button>
-							<button @click="editVisit(visit.ID)">Edit visit</button>
-							<button @click="handleDeleteVisits(visit.ID)">Delete</button>
-						</td>
+		<h3>Planlagte besøg</h3>
 
-						<td v-if="editingId === visit.ID">
-							<select v-model="editFields.konsulentId" required>
-								<option value="" disabled>Vælg konsulent</option>
-								<option v-for="user in users" :key="user.ID" :value="user.ID">
-									{{ user.name }}
-								</option>
-							</select>
-						</td>
-						<td v-else>
-							{{ visit.konsulentName }}
-						</td>
+		<div v-if="error" class="error">{{ error }}</div>
 
-						<td>{{ visit.ID }}</td>
-
-						<td>
-							<div v-for="debitor in visit.debitors" :key="debitor.ID">
-								{{ debitor.name }}
-							</div>
-						</td>
-
-						<td v-if="editingId === visit.ID">
-							<textarea v-model="editFields.address" rows="2" style="width: 100%" />
-						</td>
-						<td v-else>{{ visit.address.replace(/\r?\n/g, ', ') }}</td>
-
-						<td v-if="editingId === visit.ID">
-							<input v-model="editFields.visit_date" type="date" />
-						</td>
-						<td v-else>{{ formatDate(visit.visit_date) }}</td>
-
-						<td v-if="editingId === visit.ID">
-							<input v-model="editFields.visit_time" />
-						</td>
-						<td v-else>{{ visit.visit_time }}</td>
-
-						<td v-if="editingId === visit.ID">
-							<input v-model="editFields.visit_interval" />
-						</td>
-						<td v-else>{{ visit.visit_interval }}</td>
-					</tr>
-				</tbody>
-			</table>
+		<div class="actions">
+			<button @click="handleSendLetter" :disabled="!selectedVisitIds.length">
+				Send brev til valgte besøg ({{ selectedVisitIds.length }})
+			</button>
+			<button @click="handleDeleteVisits" :disabled="!selectedVisitIds.length">
+				Slet valgte besøg ({{ selectedVisitIds.length }})
+			</button>
 		</div>
-		<div v-else-if="error">
-			{{ error }}
-		</div>
-		<div v-else>No planned visits found</div>
+
+		<DataTable
+			ref="dataTableRef"
+			:data="visits"
+			:columns="columns"
+			selectable
+			filterable
+			paginated
+			:page-size="100"
+			@selection-ids-changed="handleSelectionChange"
+		>
+			<template #cell-konsulentName="{ item }">
+				{{ item.konsulentName }}
+			</template>
+			<template #cell-debitors="{ item }">
+				<div v-for="debitor in item.debitors" :key="debitor.ID">
+					{{ debitor.name }}
+				</div>
+			</template>
+			<template #cell-address="{ item }">
+				{{ formatAddress(item.address) }}
+			</template>
+			<template #cell-visit_date="{ item }">
+				{{ formatDate(item.visit_date) }}
+			</template>
+		</DataTable>
 	</div>
 </template>
 
 <script setup>
 import api from '@/utils/axios'
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import DataTable from './DataTable.vue'
 
-// Flat list of visits for easy rendering/selection
+const columns = [
+	{ key: 'ID', label: 'Besøgs ID', sortable: true, filterable: true },
+	{ key: 'konsulentName', label: 'Konsulent', sortable: true, filterable: true },
+	{ key: 'debitors', label: 'Debitorer', sortable: false, filterable: false },
+	{ key: 'address', label: 'Adresse', sortable: false, filterable: true },
+	{ key: 'visit_date', label: 'Dato', sortable: true, filterable: true },
+	{ key: 'visit_time', label: 'Tidspunkt', sortable: true, filterable: false },
+	{ key: 'visit_interval', label: 'Interval', sortable: false, filterable: false },
+]
+
 const visits = ref([])
-const error = ref(null)
 const selectedVisitIds = ref([])
-const editingId = ref(null)
-const editFields = ref({})
-const users = ref([])
+const error = ref(null)
+const dataTableRef = ref(null)
 
 onMounted(async () => {
-	try {
-		await getPlannedVisits()
-		await getUsers()
-	} catch (e) {
-		console.log(e)
-		error.value = 'Failed to load visits'
-	}
+	await getPlannedVisits()
 })
 
-async function getUsers() {
-	const response = await api.get('/users')
-	users.value = response.data.users || []
+async function getPlannedVisits() {
+	try {
+		const res = await api.get('/visits/planned')
+		visits.value = (res.data || []).flatMap((konsulent) =>
+			(konsulent.visits || []).map((visit) => ({
+				...visit,
+				konsulentName: konsulent.name,
+			})),
+		)
+		visits.value.sort((a, b) => a.stop_nr - b.stop_nr)
+		error.value = null
+	} catch (err) {
+		console.error('Error fetching planned visits:', err)
+		error.value = 'Fejl ved hentning af planlagte besøg'
+	}
 }
 
-async function getPlannedVisits() {
-	const res = await api.get('/visits/planned')
-	// Flatten data to visits array, keeping konsulentName on visit
-	visits.value = (res.data || []).flatMap((konsulent) =>
-		(konsulent.visits || []).map((visit) => ({
-			...visit,
-			konsulentName: konsulent.name,
-		})),
-	)
-	visits.value.sort((a, b) => a.stop_nr - b.stop_nr)
-	visits.value.forEach((visit) => {
-		visit.visit_date = new Date(visit.visit_date)
-	})
+function formatAddress(address) {
+	if (!address) return ''
+	return address.replace(/\r?\n/g, ', ')
 }
 
 function formatDate(date) {
-	if (!(date instanceof Date)) date = new Date(date)
-	return (
-		`${date.getDate().toString().padStart(2, '0')}/` +
-		`${(date.getMonth() + 1).toString().padStart(2, '0')}/` +
-		date.getFullYear()
-	)
-}
-function toISODateString(date) {
-	if (!(date instanceof Date)) date = new Date(date)
-	return date.toISOString().split('T')[0]
-}
-function toRFC3339DateString(date) {
 	if (!date) return ''
-	if (typeof date === 'string' && date.length === 10) {
-		// "yyyy-mm-dd" from the date input
-		return `${date}T00:00:00Z`
-	}
-	if (!(date instanceof Date)) date = new Date(date)
-	return date.toISOString()
+	const d = new Date(date)
+	return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`
 }
 
-const displayedSelectedVisits = computed(() => selectedVisitIds.value.slice(0, 10).join(', '))
+const handleSelectionChange = (selectedIds) => {
+	selectedVisitIds.value = selectedIds
+}
 
-async function saveEdit(visitId) {
+async function handleSendLetter() {
+	if (!selectedVisitIds.value.length) return
+
+	error.value = null
 	try {
-		const payload = {
-			...editFields.value,
-			user_id: editFields.value.konsulentId,
-			visit_date: toRFC3339DateString(editFields.value.visit_date),
+		const ops = selectedVisitIds.value.map((id) =>
+			api.post('/visit/letterSent', null, { params: { id } }),
+		)
+		const results = await Promise.allSettled(ops)
+
+		let hasErrors = false
+		results.forEach((r, i) => {
+			if (r.status !== 'fulfilled') {
+				console.error(`Failed to send letter for ${selectedVisitIds.value[i]}:`, r.reason)
+				hasErrors = true
+			}
+		})
+
+		if (hasErrors) {
+			error.value = 'Nogle breve blev ikke sendt. Prøv igen.'
 		}
-		const res = await api.patch(`/visits/planned/${visitId}`, payload)
 
-		console.log(res)
-		// Update local visits
-		const idx = visits.value.findIndex((v) => v.ID === visitId)
-		if (idx !== -1) visits.value[idx] = { ...editFields.value }
-		editingId.value = null
-	} catch (e) {
-		console.log(e)
-		e.value = 'Failed to save changes'
-		error.value = e.value
-	}
-}
-
-function cancelEdit() {
-	editingId.value = null
-}
-
-// Placeholder for when you want to change values
-function editVisit(visitId) {
-	editingId.value = visitId
-	const visit = visits.value.find((v) => v.ID === visitId)
-	editFields.value = {
-		...visit,
-		konsulentId: visit.user_id,
-		visit_date: toISODateString(visit.visit_date),
-	}
-}
-
-function markAsSent(visitId) {
-	api
-		// i want to send it as a parameter, not in the body
-		.post('/visit/letterSent', null, { params: { id: visitId } })
-		.then(() => {
-			// Optionally, show feedback to user
-			console.log(`Visit ${visitId} marked as sent`)
-
-			// remount the component to refresh data
-			editingId.value = null
-			getPlannedVisits()
-		})
-		.catch((err) => {
-			console.error('Error marking visit as sent:', err)
-			error.value = 'Failed to mark visit as sent. Please try again.'
-		})
-}
-
-async function handleDeleteVisits(id) {
-	try {
-		error.value = ''
-
-		api.delete('/visit/byId', { params: { id: id } })
-
-		console.log('deletion successful')
+		selectedVisitIds.value = []
+		dataTableRef.value?.clearSelection()
+		await getPlannedVisits()
 	} catch (err) {
-		console.error('Planning failed:', err)
+		console.error('Error sending letters:', err)
+		error.value = 'Fejl ved afsendelse af breve'
+	}
+}
+
+async function handleDeleteVisits() {
+	if (!selectedVisitIds.value.length) return
+
+	error.value = null
+	try {
+		const ops = selectedVisitIds.value.map((id) =>
+			api.delete('/visit/byId', { params: { id } }),
+		)
+		const results = await Promise.allSettled(ops)
+
+		results.forEach((r, i) => {
+			if (r.status !== 'fulfilled') {
+				console.error(`Failed to delete ${selectedVisitIds.value[i]}:`, r.reason)
+			}
+		})
+
+		selectedVisitIds.value = []
+		dataTableRef.value?.clearSelection()
+		await getPlannedVisits()
+	} catch (err) {
+		console.error('Error deleting visits:', err)
+		error.value = 'Fejl ved sletning af besøg'
 	}
 }
 </script>
 
 <style scoped>
-table {
-	border-collapse: collapse;
-	width: 100%;
+.actions {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1rem;
 }
 
-th,
-td {
-	border: 1px solid #ddd;
-	padding: 8px;
-	text-align: left;
+.actions button {
+	padding: 0.5rem 1rem;
+	border: 1px solid #d1d5db;
+	background: white;
+	border-radius: 0.375rem;
+	cursor: pointer;
+	font-size: 0.875rem;
+	transition: all 0.2s;
 }
 
-th {
-	background-color: #f0f0f0;
+.actions button:hover:not(:disabled) {
+	background-color: #f3f4f6;
+	border-color: #9ca3af;
+}
+
+.actions button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.error {
+	color: red;
+	padding: 10px;
+	background-color: #fee;
+	border: 1px solid #fcc;
+	border-radius: 4px;
+	margin-bottom: 1rem;
 }
 </style>
