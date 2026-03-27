@@ -40,7 +40,9 @@ const error = ref(null)
 const groupedVisits = computed(() => {
 	const groups = {}
 	VisitStatus4.value.forEach((visit) => {
-		const dateKey = visit.VisitDate || 'unknown'
+		const dateKey = visit.visit_date
+			? new Date(visit.visit_date).toISOString().split('T')[0]
+			: 'unknown'
 		if (!groups[dateKey]) {
 			groups[dateKey] = []
 		}
@@ -58,7 +60,7 @@ const columns = [
 	{ key: 'ID', label: 'besøgs id', sortable: true, filterable: true },
 	{ key: 'debitors', label: 'Debitorer', sortable: true, filterable: false },
 	{ key: 'address', label: 'Adresse', sortable: false, filterable: true },
-	{ key: 'VisitDate', label: 'Dato', sortable: true, filterable: true },
+	{ key: 'visit_date', label: 'Dato', sortable: true, filterable: true },
 	{
 		key: 'visit_response.actual_time',
 		label: 'Besøgs tidspunkt',
