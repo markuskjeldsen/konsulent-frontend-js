@@ -13,37 +13,267 @@
 			</button>
 		</div>
 
-		<DataTable
-			ref="dataTableRef"
-			:data="visits"
-			:columns="columns"
-			selectable
-			filterable
-			paginated
-			:page-size="100"
-			@selection-ids-changed="handleSelectionChange"
-		>
-			<template #cell-konsulentName="{ item }">
-				{{ item.konsulentName }}
-			</template>
-			<template #cell-debitors="{ item }">
-				<div v-for="debitor in item.debitors" :key="debitor.ID">
-					{{ debitor.name }}
+		<div v-for="group in groupedVisits" :key="group.key" class="group-section">
+			<div class="group-header">
+				<h4 v-if="group.key !== 'other'">
+					Gruppe {{ group.key }} - {{ formatDate(group.date) }}
+				</h4>
+				<h4 v-else>Andre besøg</h4>
+
+				<div v-if="group.key !== 'other'" class="group-actions">
+					<button @click="openDateModal(group)" class="small-btn">Ændre dato</button>
+					<button @click="openKonsulentModal(group)" class="small-btn">
+						Ændre konsulent
+					</button>
 				</div>
-			</template>
-			<template #cell-address="{ item }">
-				{{ formatAddress(item.address) }}
-			</template>
-			<template #cell-visit_date="{ item }">
-				{{ formatDate(item.visit_date) }}
-			</template>
-		</DataTable>
+			</div>
+
+			<DataTable
+				:ref="(el) => setTableRef(group.key, el)"
+				:data="group.visits"
+				:columns="columns"
+				selectable
+				filterable
+				paginated
+				:page-size="100"
+				v-model="selectedVisitIds"
+				@selection-ids-changed="handleSelectionChange"
+			>
+				<template #cell-konsulentName="{ item }">
+					{{ item.konsulentName }}
+				</template>
+				<template #cell-debitors="{ item }">
+					<div v-for="debitor in item.debitors" :key="debitor.ID">
+						{{ debitor.name }}
+					</div>
+				</template>
+				<template #cell-address="{ item }">
+					{{ formatAddress(item.address) }}
+				</template>
+				<template #cell-visit_date="{ item }">
+					{{ formatDate(item.visit_date) }}
+				</template>
+				<template #cell-group_id="{ item }">
+					<div class="row-actions">
+						<span v-if="item.group_id" class="group-badge">{{ item.group_id }}</span>
+						<button
+							v-if="item.status_id !== 3"
+							@click="openRemoveModal(item)"
+							class="tiny-btn"
+							title="Fjern fra gruppe"
+						>
+							×
+						</button>
+						<button
+							v-if="!item.group_id && item.status_id !== 3"
+							@click="openAddToGroupModal(item)"
+							class="tiny-btn add-btn"
+							title="Tilføj til gruppe"
+						>
+							+
+						</button>
+					</div>
+				</template>
+			</DataTable>
+		</div>
+
+		<!-- 1. Date Modal (Bootstrap Style) -->
+		<Teleport to="body">
+			<div v-if="showDateModal">
+				<!-- The backdrop (the darkening effect) -->
+				<div class="modal-backdrop fade show"></div>
+
+				<!-- The Modal -->
+				<div class="modal fade show" tabindex="-1" style="display: block" role="dialog">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">
+									Ændre dato for gruppe {{ selectedGroup?.key }}
+								</h5>
+								<button
+									type="button"
+									class="btn-close"
+									@click="closeDateModal"
+									aria-label="Close"
+								></button>
+							</div>
+							<div class="modal-body">
+								<label class="form-label">Vælg ny dato</label>
+								<input type="date" class="form-control" v-model="newDate" />
+							</div>
+							<div class="modal-footer">
+								<button
+									type="button"
+									class="btn btn-secondary"
+									@click="closeDateModal"
+								>
+									Annuller
+								</button>
+								<button
+									type="button"
+									class="btn btn-primary"
+									@click="submitDateChange"
+								>
+									Gem ændringer
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</Teleport>
+
+		<!-- 2. Konsulent Modal (Bootstrap Style) -->
+		<Teleport to="body">
+			<div v-if="showKonsulentModal">
+				<div class="modal-backdrop fade show"></div>
+				<div class="modal fade show" tabindex="-1" style="display: block" role="dialog">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">
+									Ændre konsulent for gruppe {{ selectedGroup?.key }}
+								</h5>
+								<button
+									type="button"
+									class="btn-close"
+									@click="closeKonsulentModal"
+								></button>
+							</div>
+							<div class="modal-body">
+								<label class="form-label">Konsulent</label>
+								<select class="form-select" v-model="newUserId">
+									<option value="">Vælg konsulent</option>
+									<option v-for="user in users" :key="user.ID" :value="user.ID">
+										{{ user.name }}
+									</option>
+								</select>
+							</div>
+							<div class="modal-footer">
+								<button
+									type="button"
+									class="btn btn-secondary"
+									@click="closeKonsulentModal"
+								>
+									Annuller
+								</button>
+								<button
+									type="button"
+									class="btn btn-primary"
+									@click="submitKonsulentChange"
+									:disabled="!newUserId"
+								>
+									Gem
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</Teleport>
+
+		<!-- Remove from Group Modal (Bootstrap Style) -->
+		<Teleport to="body">
+			<div v-if="showRemoveModal">
+				<div class="modal-backdrop fade show"></div>
+				<div class="modal fade show" tabindex="-1" style="display: block" role="dialog">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">Fjern fra gruppe</h5>
+								<button
+									type="button"
+									class="btn-close"
+									@click="closeRemoveModal"
+								></button>
+							</div>
+							<div class="modal-body">
+								<p>Vil du fjerne besøg {{ selectedVisit?.ID }} fra gruppen?</p>
+							</div>
+							<div class="modal-footer">
+								<button
+									type="button"
+									class="btn btn-secondary"
+									@click="closeRemoveModal"
+								>
+									Annuller
+								</button>
+								<button
+									type="button"
+									class="btn btn-danger"
+									@click="submitRemoveFromGroup"
+								>
+									Fjern
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</Teleport>
+
+		<!-- Add to Group Modal (Bootstrap Style) -->
+		<Teleport to="body">
+			<div v-if="showAddToGroupModal">
+				<div class="modal-backdrop fade show"></div>
+				<div class="modal fade show" tabindex="-1" style="display: block" role="dialog">
+					<div class="modal-dialog" role="document">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">Tilføj til gruppe</h5>
+								<button
+									type="button"
+									class="btn-close"
+									@click="closeAddToGroupModal"
+								></button>
+							</div>
+							<div class="modal-body">
+								<label class="form-label"
+									>Vælg en eksisterende gruppe eller opret en ny:</label
+								>
+								<select class="form-select" v-model="targetGroupId">
+									<option :value="null">Opret ny gruppe</option>
+									<option
+										v-for="group in existingGroups"
+										:key="group.key"
+										:value="group.key"
+									>
+										Gruppe {{ group.key }} ({{ formatDate(group.date) }})
+									</option>
+								</select>
+								<div v-if="targetGroupId === null" class="alert alert-info mt-2">
+									Ny gruppe vil blive oprettet med samme dato og konsulent som
+									besøget.
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button
+									type="button"
+									class="btn btn-secondary"
+									@click="closeAddToGroupModal"
+								>
+									Annuller
+								</button>
+								<button
+									type="button"
+									class="btn btn-primary"
+									@click="submitAddToGroup"
+								>
+									Tilføj
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</Teleport>
 	</div>
 </template>
 
 <script setup>
 import api from '@/utils/axios'
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DataTable from './DataTable.vue'
 
 const columns = [
@@ -54,15 +284,69 @@ const columns = [
 	{ key: 'visit_date', label: 'Dato', sortable: true, filterable: true },
 	{ key: 'visit_time', label: 'Tidspunkt', sortable: true, filterable: false },
 	{ key: 'visit_interval', label: 'Interval', sortable: false, filterable: false },
+	{ key: 'group_id', label: 'Gruppe', sortable: true, filterable: true },
 ]
 
 const visits = ref([])
 const selectedVisitIds = ref([])
 const error = ref(null)
-const dataTableRef = ref(null)
+const tableRefs = ref({})
+const users = ref([])
+
+const showDateModal = ref(false)
+const showKonsulentModal = ref(false)
+const showRemoveModal = ref(false)
+const showAddToGroupModal = ref(false)
+const selectedGroup = ref(null)
+const selectedVisit = ref(null)
+const newDate = ref('')
+const newUserId = ref('')
+const targetGroupId = ref(null)
+
+const existingGroups = computed(() => {
+	return groupedVisits.value.filter((g) => g.key !== 'other')
+})
+
+const setTableRef = (key, el) => {
+	if (el) tableRefs.value[key] = el
+}
+
+const groupedVisits = computed(() => {
+	const groups = {}
+	const other = []
+
+	visits.value.forEach((visit) => {
+		if (visit.group_id && visit.group_id !== 0) {
+			const key = String(visit.group_id)
+			if (!groups[key]) {
+				groups[key] = { key, visits: [] }
+			}
+			groups[key].visits.push(visit)
+		} else {
+			other.push(visit)
+		}
+	})
+
+	Object.values(groups).forEach((group) => {
+		group.visits.sort((a, b) => a.stop_nr - b.stop_nr)
+		group.date = group.visits[0]?.visit_date
+	})
+
+	const sortedGroups = Object.values(groups).sort((a, b) => {
+		return new Date(a.date) - new Date(b.date)
+	})
+
+	if (other.length > 0) {
+		other.sort((a, b) => a.stop_nr - b.stop_nr)
+		sortedGroups.push({ key: 'other', visits: other, date: null })
+	}
+
+	return sortedGroups
+})
 
 onMounted(async () => {
 	await getPlannedVisits()
+	await getUsers()
 })
 
 async function getPlannedVisits() {
@@ -74,11 +358,19 @@ async function getPlannedVisits() {
 				konsulentName: konsulent.name,
 			})),
 		)
-		visits.value.sort((a, b) => a.stop_nr - b.stop_nr)
 		error.value = null
 	} catch (err) {
 		console.error('Error fetching planned visits:', err)
 		error.value = 'Fejl ved hentning af planlagte besøg'
+	}
+}
+
+async function getUsers() {
+	try {
+		const res = await api.get('/users')
+		users.value = res.data.users || []
+	} catch (err) {
+		console.error('Error fetching users:', err)
 	}
 }
 
@@ -95,6 +387,110 @@ function formatDate(date) {
 
 const handleSelectionChange = (selectedIds) => {
 	selectedVisitIds.value = selectedIds
+}
+
+function openDateModal(group) {
+	selectedGroup.value = group
+	if (group.date) {
+		const d = new Date(group.date)
+		newDate.value = d.toISOString().split('T')[0]
+	}
+	showDateModal.value = true
+}
+
+function closeDateModal() {
+	showDateModal.value = false
+	newDate.value = ''
+}
+
+async function submitDateChange() {
+	if (!newDate.value || !selectedGroup.value) return
+
+	try {
+		await api.patch(`/visits/group/${selectedGroup.value.key}/date`, {
+			newDate: newDate.value,
+		})
+		closeDateModal()
+		await getPlannedVisits()
+	} catch (err) {
+		error.value = err.response?.data?.error || 'Fejl ved ændring af dato'
+	}
+}
+
+function openKonsulentModal(group) {
+	selectedGroup.value = group
+	const firstVisit = group.visits[0]
+	newUserId.value = firstVisit?.user_id || ''
+	showKonsulentModal.value = true
+}
+
+function closeKonsulentModal() {
+	showKonsulentModal.value = false
+	newUserId.value = ''
+}
+
+async function submitKonsulentChange() {
+	if (!newUserId.value || !selectedGroup.value) return
+
+	try {
+		await api.patch(`/visits/group/${selectedGroup.value.key}/konsulent`, {
+			newUserId: parseInt(newUserId.value),
+		})
+		closeKonsulentModal()
+		await getPlannedVisits()
+	} catch (err) {
+		error.value = err.response?.data?.error || 'Fejl ved ændring af konsulent'
+	}
+}
+
+function openRemoveModal(visit) {
+	selectedVisit.value = visit
+	showRemoveModal.value = true
+}
+
+function closeRemoveModal() {
+	showRemoveModal.value = false
+	selectedVisit.value = null
+}
+
+async function submitRemoveFromGroup() {
+	if (!selectedVisit.value) return
+
+	try {
+		await api.patch(`/visits/${selectedVisit.value.ID}/group`, {
+			targetGroupId: null,
+		})
+		closeRemoveModal()
+		await getPlannedVisits()
+	} catch (err) {
+		error.value = err.response?.data?.error || 'Fejl ved fjernelse fra gruppe'
+	}
+}
+
+function openAddToGroupModal(visit) {
+	selectedVisit.value = visit
+	targetGroupId.value = null
+	showAddToGroupModal.value = true
+}
+
+function closeAddToGroupModal() {
+	showAddToGroupModal.value = false
+	targetGroupId.value = null
+	selectedVisit.value = null
+}
+
+async function submitAddToGroup() {
+	if (!selectedVisit.value) return
+
+	try {
+		await api.patch(`/visits/${selectedVisit.value.ID}/group`, {
+			targetGroupId: Number(targetGroupId.value),
+		})
+		closeAddToGroupModal()
+		await getPlannedVisits()
+	} catch (err) {
+		error.value = err.response?.data?.error || 'Fejl ved tilføjelse til gruppe'
+	}
 }
 
 async function handleSendLetter() {
@@ -120,7 +516,7 @@ async function handleSendLetter() {
 		}
 
 		selectedVisitIds.value = []
-		dataTableRef.value?.clearSelection()
+		Object.values(tableRefs.value).forEach((table) => table?.clearSelection())
 		await getPlannedVisits()
 	} catch (err) {
 		console.error('Error sending letters:', err)
@@ -145,7 +541,7 @@ async function handleDeleteVisits() {
 		})
 
 		selectedVisitIds.value = []
-		dataTableRef.value?.clearSelection()
+		Object.values(tableRefs.value).forEach((table) => table?.clearSelection())
 		await getPlannedVisits()
 	} catch (err) {
 		console.error('Error deleting visits:', err)
@@ -188,5 +584,138 @@ async function handleDeleteVisits() {
 	border: 1px solid #fcc;
 	border-radius: 4px;
 	margin-bottom: 1rem;
+}
+
+.group-section {
+	margin-bottom: 2rem;
+}
+
+.group-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 1rem 0 0.5rem 0;
+}
+
+.group-section h4 {
+	margin: 0;
+	color: #374151;
+	font-size: 1rem;
+}
+
+.group-actions {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.small-btn {
+	padding: 0.25rem 0.5rem;
+	font-size: 0.75rem;
+	border: 1px solid #d1d5db;
+	background: white;
+	border-radius: 0.25rem;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.small-btn:hover {
+	background-color: #f3f4f6;
+}
+
+.group-badge {
+	display: inline-block;
+	padding: 0.125rem 0.5rem;
+	background-color: #e0e7ff;
+	color: #3730a3;
+	border-radius: 0.25rem;
+	font-size: 0.75rem;
+	font-weight: 500;
+	margin-right: 0.25rem;
+}
+
+.row-actions {
+	display: flex;
+	align-items: center;
+}
+
+.tiny-btn {
+	padding: 0.125rem 0.25rem;
+	font-size: 0.75rem;
+	line-height: 1;
+	border: 1px solid #ef4444;
+	background: white;
+	color: #ef4444;
+	border-radius: 0.25rem;
+	cursor: pointer;
+	margin-left: 0.25rem;
+}
+
+.tiny-btn.add-btn {
+	border-color: #10b981;
+	color: #10b981;
+}
+
+.tiny-btn.add-btn:hover {
+	background-color: #ecfdf5;
+}
+
+.tiny-btn:hover {
+	background-color: #fef2f2;
+}
+
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+}
+
+.modal {
+	background: white;
+	padding: 1.5rem;
+	border-radius: 0.5rem;
+	min-width: 300px;
+}
+
+.modal h5 {
+	margin: 0 0 1rem 0;
+}
+
+.modal input,
+.modal select {
+	width: 100%;
+	padding: 0.5rem;
+	margin-bottom: 1rem;
+	border: 1px solid #d1d5db;
+	border-radius: 0.25rem;
+}
+
+.modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+
+.modal-actions button {
+	padding: 0.5rem 1rem;
+	border: 1px solid #d1d5db;
+	background: white;
+	border-radius: 0.25rem;
+	cursor: pointer;
+}
+
+.modal-actions button:hover {
+	background-color: #f3f4f6;
+}
+
+.modal-actions button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 </style>

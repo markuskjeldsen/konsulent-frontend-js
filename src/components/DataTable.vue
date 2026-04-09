@@ -79,6 +79,7 @@ const props = defineProps({
 	filterable: { type: Boolean, default: false },
 	paginated: { type: Boolean, default: false },
 	pageSize: { type: Number, default: 10 },
+	modelValue: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits([
@@ -91,9 +92,19 @@ const emit = defineEmits([
 const selectedItems = ref([])
 const selectedVisitIds = ref([])
 
+// Sync with v-model
+watch(
+	() => props.modelValue,
+	(newVal) => {
+		selectedVisitIds.value = newVal || []
+	},
+	{ immediate: true },
+)
+
 const clearSelection = () => {
 	selectedItems.value = []
 	selectedVisitIds.value = []
+	emit('update:modelValue', [])
 }
 
 defineExpose({
