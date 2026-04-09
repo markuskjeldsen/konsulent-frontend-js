@@ -21,6 +21,9 @@
 				<h4 v-else>Andre besøg</h4>
 
 				<div v-if="group.key !== 'other'" class="group-actions">
+					<button @click="downloadGroupExcel(group.key)" class="small-btn">
+						Download Excel
+					</button>
 					<button @click="openDateModal(group)" class="small-btn">Ændre dato</button>
 					<button @click="openKonsulentModal(group)" class="small-btn">
 						Ændre konsulent
@@ -387,6 +390,25 @@ function formatDate(date) {
 
 const handleSelectionChange = (selectedIds) => {
 	selectedVisitIds.value = selectedIds
+}
+
+async function downloadGroupExcel(groupId) {
+	try {
+		const response = await api.get(`/visits/group/${groupId}/planned`, {
+			responseType: 'blob',
+		})
+		const url = window.URL.createObjectURL(new Blob([response.data]))
+		const link = document.createElement('a')
+		link.href = url
+		link.setAttribute('download', `Gruppe_${groupId}_planlagte_besøg.xlsx`)
+		document.body.appendChild(link)
+		link.click()
+		link.remove()
+		window.URL.revokeObjectURL(url)
+	} catch (err) {
+		console.error('Error downloading Excel:', err)
+		error.value = 'Fejl ved download af Excel'
+	}
 }
 
 function openDateModal(group) {

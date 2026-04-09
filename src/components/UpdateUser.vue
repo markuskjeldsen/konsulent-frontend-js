@@ -1,107 +1,224 @@
 <template>
-	<h3>update user</h3>
-	<p>her kan man rette fejl eller andet på eksisterende brugere</p>
+	<div class="container mt-4">
+		<div class="card">
+			<div class="card-header d-flex justify-content-between align-items-center">
+				<h4 class="mb-0">Opdater bruger</h4>
+			</div>
+			<div class="card-body">
+				<!-- User List -->
+				<div v-if="!editingUserId">
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>Brugernavn</th>
+								<th>Navn</th>
+								<th>Initials</th>
+								<th>Rettigheder</th>
+								<th>Handlinger</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="user in users" :key="user.ID">
+								<td>{{ user.ID }}</td>
+								<td>{{ user.username }}</td>
+								<td>{{ user.name }}</td>
+								<td>{{ user.initials || '-' }}</td>
+								<td>
+									<span class="badge" :class="badgeClass(user.rights)">{{
+										user.rights
+									}}</span>
+								</td>
+								<td>
+									<button
+										class="btn btn-sm btn-outline-primary me-1"
+										@click="setEditingUserId(user.ID)"
+									>
+										Redigér
+									</button>
+									<button
+										class="btn btn-sm btn-outline-danger"
+										@click="deleteUser(user.ID)"
+									>
+										Slet
+									</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<p v-if="users.length === 0" class="text-muted">Ingen brugere fundet</p>
+				</div>
 
-	<form v-if="editingUserId" @submit.prevent="editUser(editingUserId)">
-		<label for="username">Username:</label>
-		<input
-			type="text"
-			id="username"
-			v-model="users.find((u) => u.ID === editingUserId).username"
-		/>
-		<br />
-		<label for="name">Name:</label>
-		<input type="text" id="name" v-model="users.find((u) => u.ID === editingUserId).name" />
-		<br />
-		<label for="rights">Rights:</label>
-		<select id="rights" v-model="users.find((u) => u.ID === editingUserId).rights">
-			<option value="user">User</option>
-			<option value="admin">Admin</option>
-			<option value="developer">Developer</option>
-		</select>
-		<br />
-		<br />
-		<button type="submit">Save</button>
-		<button type="button" @click="editingUserId = null">Cancel</button>
-	</form>
+				<!-- Edit Form -->
+				<form v-else @submit.prevent="editUser(editingUserId)">
+					<div class="mb-3">
+						<label class="form-label">Brugernavn</label>
+						<input
+							type="text"
+							class="form-control"
+							v-model="editData.username"
+							required
+						/>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Navn</label>
+						<input type="text" class="form-control" v-model="editData.name" required />
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Initials</label>
+						<input
+							type="text"
+							class="form-control"
+							v-model="editData.initials"
+							required
+						/>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Email</label>
+						<input type="email" class="form-control" v-model="editData.email" />
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Telefon</label>
+						<input type="tel" class="form-control" v-model="editData.phone" />
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Rettigheder</label>
+						<select class="form-select" v-model="editData.rights">
+							<option value="user">Konsulent</option>
+							<option value="admin">Admin</option>
+							<option value="developer">Developer</option>
+						</select>
+					</div>
+					<div class="d-flex gap-2">
+						<button type="submit" class="btn btn-primary">Gem ændringer</button>
+						<button type="button" class="btn btn-outline-secondary" @click="cancelEdit">
+							Annuller
+						</button>
+					</div>
+				</form>
 
-	<ul v-else>
-		<li v-for="user in users" :key="user.ID">
-			<button @click="setEditingUserId(user.ID)">Edit</button>
-			<button @click="deleteUser(user.ID)">Delete</button>
-			ID: {{ user.ID }}, username: {{ user.username }}, name: {{ user.name }}
-		</li>
-	</ul>
+				<div
+					v-if="message"
+					class="alert mt-3"
+					:class="messageError ? 'alert-danger' : 'alert-success'"
+				>
+					{{ message }}
+				</div>
+			</div>
+		</div>
+	</div>
 </template>
+
 <script setup>
 import api from '@/utils/axios'
-import { userApi } from '@/utils/axios'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.js'
 
 const authStore = useAuthStore()
 const users = ref([])
 const editingUserId = ref(null)
+const message = ref('')
+const messageError = ref(false)
 
-api.get('/users')
-	.then((response) => {
-		users.value = response.data.users
-	})
-	.catch((error) => {
-		console.error('Error fetching users:', error)
-	})
+const editData = ref({
+	username: '',
+	name: '',
+	initials: '',
+	email: '',
+	phone: '',
+	rights: 'user',
+})
+
+onMounted(() => {
+	fetchUsers()
+})
+
+function fetchUsers() {
+	api.get('/users')
+		.then((response) => {
+			users.value = response.data.users
+		})
+		.catch((error) => {
+			console.error('Error fetching users:', error)
+		})
+}
+
+function badgeClass(rights) {
+	switch (rights) {
+		case 'admin':
+			return 'bg-primary'
+		case 'developer':
+			return 'bg-warning text-dark'
+		default:
+			return 'bg-secondary'
+	}
+}
 
 function setEditingUserId(userId) {
-	editingUserId.value = userId
+	const user = users.value.find((u) => u.ID === userId)
+	if (user) {
+		editData.value = {
+			username: user.username || '',
+			name: user.name || '',
+			initials: user.initials || '',
+			email: user.email || '',
+			phone: user.phone || '',
+			rights: user.rights || 'user',
+		}
+		editingUserId.value = userId
+	}
+}
+
+function cancelEdit() {
+	editingUserId.value = null
+	message.value = ''
 }
 
 function editUser(userId) {
-	// Logic to edit user
-	console.log('Editing user with ID:', userId)
-	const userData = users.value.find((user) => user.ID === userId)
-	if (!userData) {
-		console.error('User not found:', userId)
-		return
-	}
-	userData.password = undefined // do not send password if not changed
-
-	userApi
-		.update(userId, { ...userData })
+	api.patch(`/users/${userId}`, {
+		username: editData.value.username,
+		name: editData.value.name,
+		initials: editData.value.initials,
+		email: editData.value.email || null,
+		phone: editData.value.phone || null,
+		rights: editData.value.rights,
+	})
 		.then((response) => {
-			const updatedUser = response.data
-			const index = users.value.findIndex((user) => user.ID === userId)
+			const index = users.value.findIndex((u) => u.ID === userId)
 			if (index !== -1) {
-				users.value[index] = updatedUser
+				users.value[index] = { ...users.value[index], ...response.data }
 			}
 			editingUserId.value = null
+			message.value = 'Bruger opdateret!'
+			messageError.value = false
 		})
 		.catch((error) => {
 			console.error('Error updating user:', error)
+			message.value = 'Fejl ved opdatering: ' + (error.response?.data?.error || error.message)
+			messageError.value = true
 		})
 }
 
 async function deleteUser(userId) {
-	// Logic to delete user
 	if (authStore.user.rights !== 'developer') {
-		console.error('Unauthorized to delete user:', userId)
-		return
-	}
-	console.log('Deleting user with ID:', userId)
-	const userData = users.value.find((user) => user.ID === userId)
-	if (!userData) {
-		console.error('User not found:', userId)
+		message.value = 'Kun developer kan slette brugere'
+		messageError.value = true
 		return
 	}
 
-	// optimistic update with rollback
+	if (!confirm('Er du sikker på at du vil slette denne bruger?')) return
+
 	const prev = [...users.value]
 	users.value = users.value.filter((u) => u.ID !== userId)
+
 	try {
-		await userApi.delete(userId)
+		await api.delete(`/users/${userId}`)
+		message.value = 'Bruger slettet'
+		messageError.value = false
 	} catch (err) {
-		users.value = prev // rollback
-		console.error('Error deleting user:', err)
-		// show a user-facing error message here
+		users.value = prev
+		message.value = 'Fejl ved sletning: ' + (err.response?.data?.error || err.message)
+		messageError.value = true
 	}
 }
 </script>

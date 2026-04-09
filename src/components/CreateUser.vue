@@ -1,34 +1,48 @@
 <template>
-	<h3>create user</h3>
-	<p>her kan man lave nye brugere</p>
-	<br />
-	<form @submit.prevent="createUser">
-		<div>
-			<label> username: </label>
-			<input type="text" v-model="username" />
-			<label> bruges til at logge ind med </label>
+	<div class="container mt-4">
+		<div class="card">
+			<div class="card-header">
+				<h3>Opret bruger</h3>
+			</div>
+			<div class="card-body">
+				<form @submit.prevent="createUser">
+					<div class="mb-3">
+						<label class="form-label">Brugernavn</label>
+						<input type="text" class="form-control" v-model="username" required />
+						<div class="form-text">Bruges til at logge ind med</div>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Initials</label>
+						<input type="text" class="form-control" v-model="initials" required />
+						<div class="form-text">Konsulentens forkortelse</div>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Fulde navn</label>
+						<input type="text" class="form-control" v-model="fullName" required />
+						<div class="form-text">Navnet som vil blive vist om konsulenten</div>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Rettigheder</label>
+						<select class="form-select" v-model="rights">
+							<option value="user">Konsulent</option>
+							<option value="admin">Admin</option>
+							<option value="developer">Dev</option>
+						</select>
+						<div class="form-text">Bestemmer hvad brugeren kan gøre</div>
+					</div>
+					<button type="submit" class="btn btn-primary">Tilføj bruger</button>
+				</form>
+			</div>
 		</div>
-		<div>
-			<label> Fulde navn: </label>
-			<input type="text" v-model="fullName" />
-			<label> Navnet som vil blive vist om konsulenten</label>
-		</div>
-		<div>
-			<label for="rights">Rettigheder: </label>
-			<select id="rights" name="rights" v-model="rights">
-				<option value="user">Konsulent</option>
-				<option value="admin">Admin</option>
-				<option value="developer">Dev</option>
-			</select>
-			<label> bestemmer hvad brugeren kan gøre </label>
-		</div>
-		<button type="submit">tilføj</button>
-	</form>
-	<p v-if="message">
-		<strong>{{ message }}</strong>
-	</p>
 
-	<br v-if="message" />
+		<div
+			v-if="message"
+			class="alert mt-3"
+			:class="messageError ? 'alert-danger' : 'alert-success'"
+		>
+			{{ message }}
+		</div>
+	</div>
 </template>
 
 <script setup>
@@ -36,47 +50,43 @@ import { ref } from 'vue'
 import api from '@/utils/axios'
 
 const username = ref('')
+const initials = ref('')
 const fullName = ref('')
 const rights = ref('user')
-const password = ref('') // To store the generated password
+const password = ref('')
 const message = ref('')
+const messageError = ref(false)
 
 const createUser = () => {
-	// Logik for at oprette en bruger
-	console.log('Opretter bruger:', {
-		username: username.value,
-		fullName: fullName.value,
-		rights: rights.value,
-	})
-	// create a random password
-	if (!username.value || !fullName.value) {
-		message.value = 'Brugernavn og fulde navn er påkrævet.'
+	if (!username.value || !fullName.value || !initials.value) {
+		message.value = 'Brugernavn, initials og fulde navn er påkrævet.'
+		messageError.value = true
 		return
 	}
 	username.value = username.value.trim()
 	fullName.value = fullName.value.trim()
+	initials.value = initials.value.trim()
 
 	password.value = Math.random().toString(36).slice(-8)
-	console.log('Genereret kodeord:', password.value)
 	api.post('/register', {
 		username: username.value,
 		password: password.value,
 		fullName: fullName.value,
 		rights: rights.value,
+		intials: initials.value,
 	})
 		.then((response) => {
-			console.log('Bruger oprettet:', response.data)
-			// Ryd formularfelterne
 			username.value = ''
 			fullName.value = ''
 			rights.value = 'user'
-			// Eventuelt navigere til en anden side eller vise en succesmeddelelse
+			initials.value = ''
 			message.value = 'Bruger oprettet succesfuldt! Din kode er ' + password.value
+			messageError.value = false
 		})
 		.catch((error) => {
-			message.value = 'Fejl ved oprettelse af bruger: ' + error.response.data.error
-			console.error('Fejl ved oprettelse af bruger:', error)
-			// Håndter fejl, f.eks. vis en fejlmeddelelse
+			message.value =
+				'Fejl ved oprettelse af bruger: ' + (error.response?.data?.error || error.message)
+			messageError.value = true
 		})
 }
 </script>
