@@ -73,7 +73,7 @@ const createUser = () => {
 		password: password.value,
 		fullName: fullName.value,
 		rights: rights.value,
-		intials: initials.value,
+		initials: initials.value,
 	})
 		.then((response) => {
 			username.value = ''

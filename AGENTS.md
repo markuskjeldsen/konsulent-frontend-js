@@ -6,6 +6,29 @@
 - Backend repo: `C:\Users\mkk\go\src\github.com\markuskjeldsen\mop-backend-api`
 - API base: `/api/v1` or `/api/v2`
 
+## Visit Grouping (group_id)
+
+Visits can be grouped for coordinated planning. Each group has:
+
+- A unique `group_id` (positive integer)
+- Same `visit_date` for all visits in a group
+- Same `user_id` (konsulent) for all visits in a group
+
+### Group API Endpoints
+
+| Method | Endpoint                           | Auth  | Description                       |
+| ------ | ---------------------------------- | ----- | --------------------------------- |
+| GET    | `/visits/group/:groupId/planned`   | Admin | Get Excel for a group             |
+| PATCH  | `/visits/group/:groupId/date`      | Admin | Change date for all in group      |
+| PATCH  | `/visits/group/:groupId/konsulent` | Admin | Change konsulent for all in group |
+| PATCH  | `/visits/:id/group`                | Admin | Move visit to different group     |
+
+### Grouping Rules in Frontend
+
+- Visits with `group_id === null` or `group_id === 0` go to "Andre besøg" section
+- Groups are sorted by `visit_date` (ascending)
+- Within each group, visits are sorted by `stop_nr`
+
 ## DataTable Selection Patterns
 
 The DataTable component (`src/components/DataTable.vue`) emits two different selection events:
@@ -18,6 +41,63 @@ The DataTable component (`src/components/DataTable.vue`) emits two different sel
 - Data is filtered
 - Data is paginated
 - Data is sorted
+
+### Multiple Tables with Shared Selection
+
+When using multiple DataTables (e.g., grouped visits), use `v-model` for shared selection state:
+
+```vue
+<DataTable
+  v-for="group in groupedVisits"
+  :key="group.key"
+  :data="group.visits"
+  v-model="selectedVisitIds"
+  ...
+/>
+```
+
+This requires DataTable to support `modelValue` prop and emit `update:modelValue`.
+
+## Bootstrap Modals with Teleport
+
+When using Bootstrap with Vue, modals work best when teleported to body:
+
+```vue
+<Teleport to="body">
+  <div v-if="showModal">
+    <div class="modal-backdrop fade show"></div>
+    <div class="modal fade show" tabindex="-1" style="display: block" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <!-- modal content -->
+        </div>
+      </div>
+    </div>
+  </div>
+</Teleport>
+```
+
+**Important**: Use `v-show` instead of `v-if` on the inner div if the modal needs to conditionally re-render, or use `v-if` on a wrapper div that won't be affected by scoped styles.
+
+## Download Excel/Blob Files
+
+For endpoints that return binary files (Excel):
+
+```js
+async function downloadGroupExcel(groupId) {
+  const response = await api.get(`/visits/group/${groupId}/planned`, {
+    responseType: 'blob',
+  })
+  const url = window.URL.createObjectURL(new Blob([response.data]))
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', `filename.xlsx`)
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
+}
+```
 
 ## Components Using Each Pattern
 
@@ -50,20 +130,24 @@ const handleSelectionChange = (selectedIds) => {
 
 ### Visit Endpoints (Frontend → Backend)
 
-| Method | Endpoint                    | Auth  | Description                        |
-| ------ | --------------------------- | ----- | ---------------------------------- |
-| GET    | `/visits/create`            | Admin | Get created (unplanned) visits     |
-| GET    | `/visits/planned`           | Admin | Get planned visits grouped by user |
-| GET    | `/visits/byStatus?status=X` | Admin | Get visits by status ID            |
-| GET    | `/visits/byId?id=X`         | User  | Get single visit by ID             |
-| POST   | `/visits/create`            | Admin | Create new visits                  |
-| POST   | `/visits/plan`              | Admin | Upload Excel to plan visits        |
-| POST   | `/visits/visitfile`         | Admin | Generate Excel for planning        |
-| PATCH  | `/visits/planned/:id`       | Admin | Update planned visit               |
-| DELETE | `/visit/byId?id=X`          | Admin | Delete visit                       |
-| POST   | `/visit/letterSent?id=X`    | Admin | Mark visit as sent (status 3)      |
-| POST   | `/visit/reviewed`           | Admin | Move visits to status 5            |
-| GET    | `/visit/pdf?id=X`           | Admin | Get PDF for visit                  |
+| Method | Endpoint                           | Auth  | Description                        |
+| ------ | ---------------------------------- | ----- | ---------------------------------- |
+| GET    | `/visits/create`                   | Admin | Get created (unplanned) visits     |
+| GET    | `/visits/planned`                  | Admin | Get planned visits grouped by user |
+| GET    | `/visits/byStatus?status=X`        | Admin | Get visits by status ID            |
+| GET    | `/visits/byId?id=X`                | User  | Get single visit by ID             |
+| POST   | `/visits/create`                   | Admin | Create new visits                  |
+| POST   | `/visits/plan`                     | Admin | Upload Excel to plan visits        |
+| POST   | `/visits/visitfile`                | Admin | Generate Excel for planning        |
+| PATCH  | `/visits/planned/:id`              | Admin | Update planned visit               |
+| DELETE | `/visit/byId?id=X`                 | Admin | Delete visit                       |
+| POST   | `/visit/letterSent?id=X`           | Admin | Mark visit as sent (status 3)      |
+| POST   | `/visit/reviewed`                  | Admin | Move visits to status 5            |
+| GET    | `/visit/pdf?id=X`                  | Admin | Get PDF for visit                  |
+| GET    | `/visits/group/:groupId/planned`   | Admin | Get Excel for group                |
+| PATCH  | `/visits/group/:groupId/date`      | Admin | Change date for all in group       |
+| PATCH  | `/visits/group/:groupId/konsulent` | Admin | Change konsulent                   |
+| PATCH  | `/visits/:id/group`                | Admin | Move visit to different group      |
 
 ### Other Endpoints
 
@@ -90,6 +174,7 @@ type Visit struct {
     VisitInterval string       // Time window
     StatusID      uint         // 1-5 (see above)
     TypeID        uint         // Visit type
+    GroupId       *uint        // Group ID for coordinated planning (nil/0 = ungrouped)
     Debitors      []Debitor    // Many2many relation
     VisitResponse *VisitResponse // If visited
 }
@@ -167,3 +252,51 @@ Components with this pattern:
 - **NotVisitedVisits.vue**: Mass delete
 - **NonPlannedVisits.vue**: Mass delete, Plan selected
 - **ReviewVisits.vue**: Mass move to status 5, Mass download PDF
+
+## User Management
+
+### User Model
+
+```go
+type User struct {
+    gorm.Model
+    Initials string     `json:"initials" gorm:"not null"`
+    Name     string     `json:"name" binding:"required" gorm:"not null;uniqueIndex:ux_users_name_active,where:deleted_at IS NULL"`
+    Username string     `json:"username" binding:"required" gorm:"not null;uniqueIndex:ux_users_username_active,where:deleted_at IS NULL"`
+    Password string     `json:"password" binding:"required" gorm:"not null"`
+    Rights   UserRights `json:"rights" gorm:"default:user"`
+    Email    string     `json:"email"`
+    Phone    string     `json:"phone"`
+}
+```
+
+### User API Endpoints
+
+| Method | Endpoint              | Auth       | Description        |
+| ------ | --------------------- | ---------- | ------------------ |
+| GET    | `/users`              | Admin      | Get all users      |
+| POST   | `/register`           | Admin      | Create new user    |
+| PATCH  | `/users/:id`          | User/Admin | Update user fields |
+| PATCH  | `/users/:id/password` | User       | Change password    |
+| DELETE | `/users/:id`          | Developer  | Delete user        |
+
+### PATCH /users/:id Fields
+
+The patch endpoint accepts these JSON fields:
+
+| Field    | Required | Notes                |
+| -------- | -------- | -------------------- |
+| username | Yes      |                      |
+| name     | Yes      |                      |
+| initials | Yes      |                      |
+| email    | No       | Send `null` to clear |
+| phone    | No       | Send `null` to clear |
+| rights   | No       | Developer only       |
+
+### Frontend Components
+
+| Component       | Description                    |
+| --------------- | ------------------------------ |
+| CreateUser.vue  | Create new user with Bootstrap |
+| UpdateUser.vue  | Edit existing users            |
+| ProfileView.vue | User profile + password change |
