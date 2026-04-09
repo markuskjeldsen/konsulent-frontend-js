@@ -76,7 +76,7 @@ function moveToStatus5() {
 
 	// for testing add a wrong id
 	// selectedVisits.value.push(9999)
-	const visitsToMove = [...selectedVisits.value]
+	const visitsToMove = [...selectedVisits.value.map((visit) => visit.ID)]
 
 	api.post('/visit/reviewed', { reviewed_ids: visitsToMove })
 		.then((response) => {
@@ -93,8 +93,8 @@ function moveToStatus5() {
 			}
 		})
 		.catch((err) => {
-			console.error('Error moving visits to status 5:', err)
-			error.value = 'Failed to move visits to status 5. Please try again.'
+			console.error('Error moving visits to status 5:', err.request.response)
+			error.value = 'Failed to move visits to status 5: ' + err.request.response
 		})
 	fetchVisits()
 }
