@@ -2,58 +2,39 @@
 	<!-- Error Display -->
 	<div v-if="error" class="error">{{ error }}</div>
 
-	<button @click="moveToStatus5">Press here to move selected visits to status 5</button>
-
-	<!-- Visits Tables by Day -->
-	<div v-for="dateKey in sortedDateKeys" :key="dateKey" class="day-group">
-		<h5>{{ formatDate(dateKey) }}</h5>
-		<DataTable
-			:data="groupedVisits[dateKey]"
-			:columns="columns"
-			selectable
-			filterable
-			@selection-ids-changed="handleIdSelection"
-		>
-			<template #cell-debitors="{ item }">
-				<div v-for="debitor in item.debitors" :key="debitor.ID">
-					{{ debitor.name }}
-				</div>
-			</template>
-			<template #cell-status="{ item }">
-				{{ item.status.ID }}: {{ item.status.text }}
-			</template>
-		</DataTable>
+	<div class="action-buttons">
+		<button @click="moveToStatus5" :disabled="selectedVisits.length === 0">
+			Flyt valgte besøg til status 5
+		</button>
+		<button @click="requestPdfs" :disabled="selectedVisits.length === 0">
+			Hent PDF for valgte besøg
+		</button>
 	</div>
 
-	<button @click="requestPdfs">Press here to get the PDF</button>
+	<DataTable
+		:data="VisitStatus4"
+		:columns="columns"
+		selectable
+		filterable
+		@selection-ids-changed="handleIdSelection"
+	>
+		<template #cell-debitors="{ item }">
+			<div v-for="debitor in item.debitors" :key="debitor.ID">
+				{{ debitor.name }}
+			</div>
+		</template>
+		<template #cell-status="{ item }"> {{ item.status.ID }}: {{ item.status.text }} </template>
+	</DataTable>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import api from '@/utils/axios'
 import DataTable from './DataTable.vue'
 
 const selectedVisits = ref([])
 const VisitStatus4 = ref([])
 const error = ref(null)
-
-const groupedVisits = computed(() => {
-	const groups = {}
-	VisitStatus4.value.forEach((visit) => {
-		const dateKey = visit.visit_date
-			? new Date(visit.visit_date).toISOString().split('T')[0]
-			: 'unknown'
-		if (!groups[dateKey]) {
-			groups[dateKey] = []
-		}
-		groups[dateKey].push(visit)
-	})
-	return groups
-})
-
-const sortedDateKeys = computed(() => {
-	return Object.keys(groupedVisits.value).sort()
-})
 
 const columns = [
 	{ key: 'sagsnr', label: 'Sags nummer', sortable: true, filterable: true },
@@ -85,12 +66,6 @@ const fetchVisits = async () => {
 
 // Fetch list when the component is mounted
 onMounted(fetchVisits)
-
-function formatDate(date) {
-	if (!date) return ''
-	const d = new Date(date)
-	return d.toLocaleDateString('da-DK', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
 
 function moveToStatus5() {
 	if (selectedVisits.value.length === 0) {
@@ -172,31 +147,19 @@ function handleIdSelection(selectedIds) {
 </script>
 
 <style scoped>
-.visits-table {
-	width: 100%;
-	border-collapse: collapse;
-	margin-top: 1rem;
+.action-buttons {
+	margin-bottom: 1rem;
 }
 
-.visits-table th,
-.visits-table td {
-	border: 1px solid #ddd;
-	padding: 12px;
-	text-align: left;
-}
-
-.visits-table th {
-	background-color: #f5f5f5;
-	font-weight: bold;
-}
-
-.visit-row {
+.action-buttons button {
+	margin-right: 0.5rem;
+	padding: 0.5rem 1rem;
 	cursor: pointer;
-	transition: background-color 0.2s;
 }
 
-.visit-row:hover {
-	background-color: #f9f9f9;
+.action-buttons button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 .error {
