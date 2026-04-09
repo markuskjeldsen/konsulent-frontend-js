@@ -82,6 +82,7 @@ const createUser = () => {
 			initials.value = ''
 			message.value = 'Bruger oprettet succesfuldt! Din kode er ' + password.value
 			messageError.value = false
+			message.value += 'backend response: ' + response.data.message
 		})
 		.catch((error) => {
 			message.value =
