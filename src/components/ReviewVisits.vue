@@ -6,7 +6,7 @@
 
 	<!-- Visits Tables by Day -->
 	<div v-for="dateKey in sortedDateKeys" :key="dateKey" class="day-group">
-		<h3>{{ formatDate(dateKey) }}</h3>
+		<h5>{{ formatDate(dateKey) }}</h5>
 		<DataTable
 			:data="groupedVisits[dateKey]"
 			:columns="columns"
