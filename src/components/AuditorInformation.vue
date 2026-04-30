@@ -1,3 +1,4 @@
+//AuditorInformation.vue
 <template>
 	<div class="auditor-view"></div>
 	<div v-for="group in groupedVisitsByDate" :key="group.date" class="visit-group">
@@ -14,12 +15,9 @@
 		<table class="visit-table">
 			<thead>
 				<tr>
-					<th></th>
+						<th>Status</th>
 					<th>Adresse</th>
-					<th>Debitor Navn</th>
-					<th>Besøgs interval</th>
-					<th>Est. ank.</th>
-					<th>status and type</th>
+						<th>Ankomst</th>
 				</tr>
 			</thead>
 			<tbody>

@@ -1,41 +1,38 @@
 <template>
 	<tr style="width: 100%">
-		<td v-if="!visit.visit_response && visit.status_id == 3 && isToday">
-			<button class="visit-btn" @click="open">Besøg</button>
-		</td>
-		<td v-else-if="visit.status_id == 4">
-			<button class="visit-btn" @click="edit">Rediger</button>
-		</td>
-		<td v-else>
-			<button class="visit-btn">Afvent</button>
+		<td>
+			<button
+				class="visit-btn"
+				:class="buttonClass"
+				:disabled="!canVisit"
+				@click="canVisit && open()"
+			>
+				{{ buttonLabel }}
+			</button>
 		</td>
 
-		<td>{{ visit.address }}</td>
-		<td>
-			<span v-for="(debitor, i) in visit.debitors" :key="debitor.id">
-				{{ debitor.name }}<span v-if="i < visit.debitors.length - 1">, </span>
-			</span>
+		<td class="address-cell" @click="copyAddress">
+			<span>{{ visit.address }}</span>
+			<span class="copy-feedback" :class="{ visible: copied }">✓ Kopieret</span>
 		</td>
-		<td>{{ visit.visit_interval }}</td>
-		<td>{{ visit.visit_time }}</td>
-		<td class="checkmark-cell">
-			<span> {{ visit.status.text }} - {{ visit.type.text }}</span>
-			<!-- v-if="visit.visit_response" class="checkmark"-->
-		</td>
+
+		<td>{{ formattedAnkomst }}</td>
 	</tr>
 </template>
 
 <script setup>
 import router from '@/router'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
 	visit: Object,
 })
+
+const copied = ref(false)
+
 const isToday = computed(() => {
 	const today = new Date()
 	const visitDate = new Date(props.visit.visit_date)
-
 	return (
 		today.getFullYear() === visitDate.getFullYear() &&
 		today.getMonth() === visitDate.getMonth() &&
@@ -43,28 +40,99 @@ const isToday = computed(() => {
 	)
 })
 
-function open() {
-	console.log('/form:' + props.visit.ID)
-	router.push({
-		name: 'form',
-		params: { id: props.visit.ID },
-	})
+const canVisit = computed(
+	() => !props.visit.visit_response && props.visit.status_id == 3 && isToday.value,
+)
+
+const buttonLabel = computed(() => {
+	if (canVisit.value) return 'Besøg'
+	if (props.visit.visit_response || props.visit.status_id > 3) return 'Besøgt'
+	return 'Afvent'
+})
+
+const buttonClass = computed(() => {
+	if (canVisit.value) return 'btn-active'
+	if (props.visit.visit_response || props.visit.status_id > 3) return 'btn-visited'
+	return 'btn-waiting'
+})
+
+const formattedAnkomst = computed(() => {
+	const interval = props.visit.visit_interval ?? ''
+	const time = props.visit.visit_time ?? ''
+
+	// Shorten interval from "12:00 - 15:00" to "12-15"
+	const short = interval.replace(/(\d+):\d+\s*-\s*(\d+):\d+/, '$1-$2')
+
+	if (short && time) return `${short} (${time})`
+	if (short) return short
+	if (time) return time
+	return ''
+})
+
+async function copyAddress() {
+	try {
+		await navigator.clipboard.writeText(props.visit.address)
+		copied.value = true
+		setTimeout(() => (copied.value = false), 2000)
+	} catch (e) {
+		console.error('Copy failed', e)
+	}
 }
-function edit() {
-	// You can emit here if needed
-	console.log(props.visit)
+
+function open() {
+	router.push({ name: 'form', params: { id: props.visit.ID } })
 }
 </script>
 
 <style scoped>
 .visit-btn {
-	min-width: 60px;
-}
-/* Optional: checkmark cell alignment */
-.checkmark {
-	color: green;
-	font-size: 1.5em;
+	min-width: 70px;
+	padding: 8px 12px;
+	border-radius: 6px;
+	border: none;
 	font-weight: bold;
-	justify-self: auto;
+	cursor: pointer;
+}
+
+.btn-active {
+	background-color: #4caf50;
+	color: white;
+	opacity: 1;
+}
+
+.btn-visited {
+	background-color: #81c784;
+	color: white;
+	opacity: 0.6;
+	cursor: default;
+}
+
+.btn-waiting {
+	background-color: #9e9e9e;
+	color: white;
+	opacity: 0.6;
+	cursor: default;
+}
+
+.address-cell {
+	cursor: pointer;
+	position: relative;
+	user-select: none;
+}
+
+.address-cell:active {
+	opacity: 0.6;
+}
+
+.copy-feedback {
+	margin-left: 8px;
+	color: #4caf50;
+	font-size: 0.85em;
+	opacity: 0;
+	transition: opacity 0.3s;
+}
+
+.copy-feedback.visible {
+	opacity: 1;
 }
 </style>
