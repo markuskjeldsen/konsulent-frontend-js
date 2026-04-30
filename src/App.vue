@@ -15,9 +15,7 @@
 				>
 				<BNavItem to="/login" v-if="!authStore.isAuthenticated">Login</BNavItem>
 				<BNavItem to="/profile" v-if="authStore.isAuthenticated">Profile</BNavItem>
-				<BNavItem to="/settings" v-if="authStore.isAuthenticated"
-					>Indstillinger</BNavItem
-				>
+				<BNavItem to="/settings" v-if="authStore.isAuthenticated">Indstillinger</BNavItem>
 			</BNavbarNav>
 		</BCollapse>
 	</BNavbar>
@@ -29,7 +27,14 @@
 
 <script setup>
 import { RouterView } from 'vue-router'
-import { BNavbar, BNavbarBrand, BNavbarNav, BNavItem, BNavbarToggle, BCollapse } from 'bootstrap-vue-next'
+import {
+	BNavbar,
+	BNavbarBrand,
+	BNavbarNav,
+	BNavItem,
+	BNavbarToggle,
+	BCollapse,
+} from 'bootstrap-vue-next'
 
 import { useAuthStore } from '@/stores/auth.js'
 import logo from '@/assets/DAI-logo.png'
