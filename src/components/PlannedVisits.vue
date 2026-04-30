@@ -575,7 +575,8 @@ async function handleDeleteVisits() {
 <style scoped>
 .actions {
 	display: flex;
-	gap: 1rem;
+	flex-wrap: wrap;
+	gap: 0.75rem;
 	margin-bottom: 1rem;
 }
 
@@ -601,10 +602,10 @@ async function handleDeleteVisits() {
 
 .error {
 	color: red;
-	padding: 10px;
+	padding: 0.75rem;
 	background-color: #fee;
 	border: 1px solid #fcc;
-	border-radius: 4px;
+	border-radius: 0.25rem;
 	margin-bottom: 1rem;
 }
 
@@ -614,8 +615,10 @@ async function handleDeleteVisits() {
 
 .group-header {
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: space-between;
 	align-items: center;
+	gap: 0.75rem;
 	margin: 1rem 0 0.5rem 0;
 }
 
@@ -627,6 +630,7 @@ async function handleDeleteVisits() {
 
 .group-actions {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 0.5rem;
 }
 
@@ -685,59 +689,35 @@ async function handleDeleteVisits() {
 	background-color: #fef2f2;
 }
 
-.modal-overlay {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: rgba(0, 0, 0, 0.5);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 1000;
+/* Modal styles - use Bootstrap defaults, just add responsive tweaks */
+.modal-dialog {
+	max-width: 90%;
+	margin: 1.75rem auto;
 }
 
-.modal {
-	background: white;
-	padding: 1.5rem;
-	border-radius: 0.5rem;
-	min-width: 300px;
+@media (max-width: 768px) {
+	.modal-dialog {
+		max-width: 95%;
+		margin: 1rem auto;
+	}
 }
 
-.modal h5 {
-	margin: 0 0 1rem 0;
-}
-
-.modal input,
-.modal select {
-	width: 100%;
-	padding: 0.5rem;
-	margin-bottom: 1rem;
-	border: 1px solid #d1d5db;
-	border-radius: 0.25rem;
-}
-
-.modal-actions {
-	display: flex;
-	justify-content: flex-end;
-	gap: 0.5rem;
-}
-
-.modal-actions button {
-	padding: 0.5rem 1rem;
-	border: 1px solid #d1d5db;
-	background: white;
-	border-radius: 0.25rem;
-	cursor: pointer;
-}
-
-.modal-actions button:hover {
-	background-color: #f3f4f6;
-}
-
-.modal-actions button:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
+@media (max-width: 480px) {
+	.group-header {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+	.group-actions {
+		width: 100%;
+	}
+	.group-actions button {
+		flex: 1;
+	}
+	.actions {
+		flex-direction: column;
+	}
+	.actions button {
+		width: 100%;
+	}
 }
 </style>

@@ -6,8 +6,8 @@
 					class="m-1 mx-auto d-inline-block"
 					:style="{
 						backgroundColor: randomColor(),
-						height: '100px',
-						width: '100px',
+						height: '6rem',
+						width: '6rem',
 						borderRadius: '50%',
 					}"
 				/>
@@ -118,8 +118,8 @@ function getLuminance(color) {
 .auditor-card {
 	cursor: pointer;
 	transition: all 0.2s ease-in-out;
-	min-height: 250px;
-	padding: 20px;
+	min-height: 12rem;
+	padding: 1.25rem;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -127,10 +127,17 @@ function getLuminance(color) {
 	border-radius: 50px;
 }
 
+@media (max-width: 768px) {
+	.auditor-card {
+		min-height: 10rem;
+		padding: 1rem;
+	}
+}
+
 .auditor-card-footer {
 	border-top: 1px solid #000000;
-	padding-top: 10px;
-	margin-top: 10px;
+	padding-top: 0.625rem;
+	margin-top: 0.625rem;
 	font-size: 90%;
 }
 

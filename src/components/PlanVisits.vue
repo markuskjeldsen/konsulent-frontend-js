@@ -236,19 +236,30 @@ async function uploadPlannedRoute() {
 </script>
 <style scoped>
 .add-routes {
+  width: 100%;
   max-width: 1200px;
+  margin: 0 auto;
 }
 form > div {
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  margin-top: 0.625rem;
+  font-size: 0.875rem;
 }
 th,
 td {
   border: 1px solid #ddd;
-  padding: 5px;
+  padding: 0.375rem;
+}
+@media (max-width: 768px) {
+  table {
+    font-size: 0.75rem;
+  }
+  th, td {
+    padding: 0.25rem;
+  }
 }
 </style>

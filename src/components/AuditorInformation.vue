@@ -12,18 +12,20 @@
 			}}
 		</h3>
 
-		<table class="visit-table">
-			<thead>
-				<tr>
+		<div class="table-responsive">
+			<table class="visit-table">
+				<thead>
+					<tr>
 						<th>Status</th>
-					<th>Adresse</th>
+						<th>Adresse</th>
 						<th>Ankomst</th>
-				</tr>
-			</thead>
-			<tbody>
-				<VisitCard v-for="visit in group.visits" :key="visit.id" :visit="visit" />
-			</tbody>
-		</table>
+					</tr>
+				</thead>
+				<tbody>
+					<VisitCard v-for="visit in group.visits" :key="visit.id" :visit="visit" />
+				</tbody>
+			</table>
+		</div>
 	</div>
 </template>
 
@@ -122,20 +124,25 @@ const groupedVisitsByDate = computed(() => {
 
 <style scoped>
 .auditor-view {
-	padding: 20px;
+	padding: 1rem;
+}
+.table-responsive {
+	width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	margin-bottom: 1rem;
 }
 .visit-table {
-	width: 100%; /* Make table much wider */
-	min-width: 720px; /* Nice min width for readability */
+	width: 100%;
 	border-collapse: separate;
 	border-spacing: 0 0.5em;
 	background: white;
+	white-space: nowrap;
 }
 .visit-table th,
 .visit-table td {
-	padding: 8px 10px;
+	padding: 0.5rem 0.75rem;
 	text-align: left;
-	/* adjust width as desired */
 }
 .visit-table th {
 	background: #f5f5fb;
@@ -148,17 +155,32 @@ const groupedVisitsByDate = computed(() => {
 	box-shadow: 0 0 0 1px #e5e5e5;
 }
 .checkmark-cell {
-	width: 32px;
+	width: 2rem;
 	text-align: center;
 }
 .date-header {
-	margin-top: 20px;
-	margin-bottom: 2px;
+	margin-top: 1.25rem;
+	margin-bottom: 0.125rem;
 	font-size: 1.15em;
 	font-weight: bold;
 }
 .visit-group {
 	width: 100%;
-	margin-bottom: 24px;
+	margin-bottom: 1.5rem;
+}
+@media (max-width: 768px) {
+	.visit-table th,
+	.visit-table td {
+		padding: 0.375rem 0.5rem;
+		font-size: 0.875rem;
+	}
+	.date-header {
+		font-size: 1em;
+	}
+}
+@media (max-width: 480px) {
+	.auditor-view {
+		padding: 0.5rem;
+	}
 }
 </style>

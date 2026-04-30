@@ -12,12 +12,9 @@ new ones
 <script setup>
 import { ref, computed } from 'vue'
 import VisitCard from '@/components/VisitCard.vue'
-import { useAuthStore } from '@/stores/auth.js'
 import api from '@/utils/axios.js'
 import { useRoute } from 'vue-router'
 const route = useRoute()
-
-const authStore = useAuthStore()
 
 const ID = Number(route.params.id)
 const auditor = ref()
