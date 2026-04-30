@@ -110,6 +110,14 @@ const groupedVisitsByDate = computed(() => {
 		arr.sort((a, b) => timeToMs(a.visit_time) - timeToMs(b.visit_time))
 	}
 
+	// 4) ensure there is only data in the future or today
+	const todayString = getTodayString()
+	for (const [date] of map.entries()) {
+		if (date < todayString) {
+			map.delete(date)
+		}
+	}
+
 	return [...map.entries()].map(([date, visits]) => ({ date, visits }))
 })
 </script>
