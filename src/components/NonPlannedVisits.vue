@@ -35,6 +35,10 @@
 			<template #cell-adresse="{ item }">
 				{{ item.adresse }}, {{ item.postnr }} {{ item.bynavn }}
 			</template>
+			<!-- klientnavn -->
+			<template #cell-klientnavn="{ item }">
+				{{ item.advopro_klient }}
+			</template>
 		</DataTable>
 	</div>
 </template>
@@ -58,6 +62,7 @@ const error = ref()
 const columns = [
 	{ key: 'sagsnr', label: 'Sags nummer', sortable: true, filterable: true },
 	{ key: 'ID', label: 'besøgsid', sortable: true, filterable: false },
+	{ key: 'klientnavn', label: 'Klient', sortable: true, filterable: true },
 	{ key: 'debitors', label: 'Debitorer', sortable: false, filterable: true },
 	{ key: 'address', label: 'Adresse', sortable: false, filterable: true },
 	{ key: 'status_id', label: 'StatusId', sortable: false, filterable: false },
