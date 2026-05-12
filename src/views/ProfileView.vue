@@ -5,7 +5,7 @@
 				<div class="card">
 					<div class="card-header d-flex justify-content-between align-items-center">
 						<h4 class="mb-0">Profil</h4>
-						<span class="badge bg-secondary">{{ authStore.user.rights }}</span>
+						<span class="badge bg-secondary">{{ authStore.user?.rights }}</span>
 					</div>
 					<div class="card-body">
 						<p class="text-muted">
@@ -169,9 +169,11 @@
 import { ref, reactive, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.js'
 import api from '@/utils/axios.js'
+import { useRouter } from 'vue-router' // ✅ add this
 
 const loading = ref(false)
 const authStore = useAuthStore()
+const router = useRouter() // ✅ add this
 const editing = ref(false)
 const error = ref(false)
 const feedback = ref('')
@@ -268,8 +270,8 @@ async function updateDetails() {
 }
 
 async function logout() {
-	authStore.logout()
-	window.location.reload()
+	await authStore.logout()
+	router.push('/login') // ✅ navigate here, not in the store
 }
 </script>
 

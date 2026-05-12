@@ -1,13 +1,28 @@
 // src/stores/auth.js (Pinia example)
 import { defineStore } from 'pinia'
 import api from '@/utils/axios'
-import router from '@/router'
 
 export const USER_RIGHTS = {
 	ADMIN: 'admin',
 	DEVELOPER: 'developer',
 	OFFICE: 'office',
 	AUDITOR: 'auditor',
+	USER: 'user',
+}
+
+export const RIGHTS_PRESETS = {
+	ALL: [
+		USER_RIGHTS.ADMIN,
+		USER_RIGHTS.DEVELOPER,
+		USER_RIGHTS.OFFICE,
+		USER_RIGHTS.AUDITOR,
+		USER_RIGHTS.USER,
+	],
+	OFFICE: [USER_RIGHTS.OFFICE],
+	AUDITOR: [USER_RIGHTS.AUDITOR],
+	OFFICE_AND_AUDITOR: [USER_RIGHTS.OFFICE, USER_RIGHTS.AUDITOR],
+	ADMIN: [USER_RIGHTS.ADMIN],
+	DEVELOPER: [USER_RIGHTS.DEVELOPER],
 }
 
 function normalizeUserResponse(data) {
@@ -24,11 +39,13 @@ export const useAuthStore = defineStore('auth', {
 	}),
 	getters: {
 		isAuthenticated: (state) => !!state.user,
+		userRights: (state) => state.user?.rights ?? state.user?.role ?? null, // adjust field name to match your API response
 	},
 	actions: {
 		async login(credentials) {
-			const { data } = await api.post('/login', credentials) // verifytoken
+			const { data } = await api.post('/login', credentials)
 			this.user = normalizeUserResponse(data)
+			this.initializing = false
 		},
 		async logout() {
 			await api.post('/logout')
@@ -36,7 +53,7 @@ export const useAuthStore = defineStore('auth', {
 		},
 		async fetchUser() {
 			try {
-				var { data } = await api.get('/user')
+				const { data } = await api.get('/user')
 				this.user = normalizeUserResponse(data)
 			} catch (err) {
 				console.error('Error fetching user:', err)
@@ -44,9 +61,6 @@ export const useAuthStore = defineStore('auth', {
 			} finally {
 				this.initializing = false
 			}
-		},
-		async toLoginScreen() {
-			router.push('/login')
 		},
 	},
 })

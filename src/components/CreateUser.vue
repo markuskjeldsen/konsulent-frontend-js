@@ -1,3 +1,4 @@
+//CREATEUSER.vue
 <template>
 	<div class="container mt-4">
 		<div class="card">
@@ -24,9 +25,9 @@
 					<div class="mb-3">
 						<label class="form-label">Rettigheder</label>
 						<select class="form-select" v-model="rights">
-							<option value="user">Konsulent</option>
-							<option value="admin">Admin</option>
-							<option value="developer">Dev</option>
+							<option v-for="opt in ROLE_OPTIONS" :key="opt.value" :value="opt.value">
+								{{ opt.label }}
+							</option>
 						</select>
 						<div class="form-text">Bestemmer hvad brugeren kan gøre</div>
 					</div>
@@ -48,46 +49,66 @@
 <script setup>
 import { ref } from 'vue'
 import api from '@/utils/axios'
+import { USER_RIGHTS } from '@/stores/auth'
 
 const username = ref('')
 const initials = ref('')
 const fullName = ref('')
-const rights = ref('user')
+const rights = ref(USER_RIGHTS.OFFICE) // sensible default
 const password = ref('')
 const message = ref('')
 const messageError = ref(false)
 
-const createUser = () => {
+const ROLE_OPTIONS = [
+	{ value: USER_RIGHTS.OFFICE, label: 'Kontor' },
+	{ value: USER_RIGHTS.AUDITOR, label: 'Konsulent' },
+	{ value: USER_RIGHTS.ADMIN, label: 'Admin' },
+	{ value: USER_RIGHTS.DEVELOPER, label: 'Dev' },
+]
+
+const generatePassword = () => {
+	const bytes = crypto.getRandomValues(new Uint8Array(9))
+	return Array.from(bytes)
+		.map((b) => b.toString(36))
+		.join('')
+		.slice(0, 12)
+}
+
+const createUser = async () => {
 	if (!username.value || !fullName.value || !initials.value) {
 		message.value = 'Brugernavn, initials og fulde navn er påkrævet.'
 		messageError.value = true
 		return
 	}
+	if (!Object.values(USER_RIGHTS).includes(rights.value)) {
+		message.value = 'Ugyldig rolle valgt.'
+		messageError.value = true
+		return
+	}
+
 	username.value = username.value.trim()
 	fullName.value = fullName.value.trim()
 	initials.value = initials.value.trim()
+	password.value = generatePassword()
 
-	password.value = Math.random().toString(36).slice(-8)
-	api.post('/register', {
-		username: username.value,
-		password: password.value,
-		fullName: fullName.value,
-		rights: rights.value,
-		initials: initials.value,
-	})
-		.then((response) => {
-			username.value = ''
-			fullName.value = ''
-			rights.value = 'user'
-			initials.value = ''
-			message.value = 'Bruger oprettet succesfuldt! Din kode er ' + password.value
-			messageError.value = false
-			message.value += 'backend response: ' + response.data.message
+	try {
+		await api.post('/register', {
+			username: username.value,
+			password: password.value,
+			fullName: fullName.value,
+			rights: rights.value,
+			initials: initials.value,
 		})
-		.catch((error) => {
-			message.value =
-				'Fejl ved oprettelse af bruger: ' + (error.response?.data?.error || error.message)
-			messageError.value = true
-		})
+		message.value = `Bruger oprettet succesfuldt! Adgangskode: ${password.value}`
+		messageError.value = false
+		username.value = ''
+		fullName.value = ''
+		initials.value = ''
+		rights.value = USER_RIGHTS.OFFICE
+	} catch (error) {
+		message.value =
+			'Fejl ved oprettelse af bruger: ' + (error.response?.data?.error || error.message)
+		messageError.value = true
+	}
 }
 </script>

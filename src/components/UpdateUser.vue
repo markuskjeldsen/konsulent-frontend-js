@@ -84,9 +84,9 @@
 					<div class="mb-3">
 						<label class="form-label">Rettigheder</label>
 						<select class="form-select" v-model="editData.rights">
-							<option value="user">Konsulent</option>
-							<option value="admin">Admin</option>
-							<option value="developer">Developer</option>
+							<option v-for="opt in ROLE_OPTIONS" :key="opt.value" :value="opt.value">
+								{{ opt.label }}
+							</option>
 						</select>
 					</div>
 					<div class="d-flex gap-2">
@@ -112,7 +112,14 @@
 <script setup>
 import api from '@/utils/axios'
 import { ref, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/auth.js'
+import { useAuthStore, USER_RIGHTS } from '@/stores/auth.js'
+
+const ROLE_OPTIONS = [
+	{ value: USER_RIGHTS.OFFICE, label: 'Kontor' },
+	{ value: USER_RIGHTS.AUDITOR, label: 'Konsulent' },
+	{ value: USER_RIGHTS.ADMIN, label: 'Admin' },
+	{ value: USER_RIGHTS.DEVELOPER, label: 'Dev' },
+]
 
 const authStore = useAuthStore()
 const users = ref([])
@@ -126,7 +133,7 @@ const editData = ref({
 	initials: '',
 	email: '',
 	phone: '',
-	rights: 'user',
+	rights: USER_RIGHTS.OFFICE,
 })
 
 onMounted(() => {
@@ -145,10 +152,14 @@ function fetchUsers() {
 
 function badgeClass(rights) {
 	switch (rights) {
-		case 'admin':
+		case USER_RIGHTS.ADMIN:
 			return 'bg-primary'
-		case 'developer':
+		case USER_RIGHTS.DEVELOPER:
 			return 'bg-warning text-dark'
+		case USER_RIGHTS.OFFICE:
+			return 'bg-success'
+		case USER_RIGHTS.AUDITOR:
+			return 'bg-info text-dark'
 		default:
 			return 'bg-secondary'
 	}

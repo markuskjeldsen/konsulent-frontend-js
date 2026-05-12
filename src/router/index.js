@@ -1,6 +1,6 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth' // Import the auth store
+import { useAuthStore, RIGHTS_PRESETS } from '@/stores/auth' // Import the auth store
 import HomeView from '../views/HomeView.vue'
 
 const router = createRouter({
@@ -11,7 +11,7 @@ const router = createRouter({
 			name: 'home',
 			component: HomeView,
 			meta: {
-				roles: ['admin', 'user', ''], // This route requires admin role
+				roles: RIGHTS_PRESETS.ALL, // This route requires all users
 			},
 		},
 		{
@@ -24,7 +24,7 @@ const router = createRouter({
 			name: 'settings',
 			component: () => import('@/views/SettingsView.vue'),
 			meta: {
-				roles: ['user'], // This route requires user role
+				roles: RIGHTS_PRESETS.ADMIN, // This route requires admin role
 			},
 		},
 		{
@@ -32,7 +32,7 @@ const router = createRouter({
 			name: 'profile',
 			component: () => import('@/views/ProfileView.vue'),
 			meta: {
-				roles: ['admin', 'user'], // This route requires admin role
+				roles: RIGHTS_PRESETS.ALL, // This route requires admin role
 			},
 		},
 		{
@@ -40,7 +40,7 @@ const router = createRouter({
 			name: 'Auditor',
 			component: () => import('@/views/AuditorView.vue'),
 			meta: {
-				roles: ['admin', 'user'], // This route requires admin role
+				roles: RIGHTS_PRESETS.AUDITOR, // This route requires auditor role
 			},
 		},
 		{
@@ -48,7 +48,7 @@ const router = createRouter({
 			name: 'routeEditor',
 			component: () => import('@/views/RouteEditorView.vue'),
 			meta: {
-				roles: ['admin', 'user'], // This route requires admin role
+				roles: RIGHTS_PRESETS.OFFICE, // This route requires office role
 			},
 		},
 		{
@@ -56,7 +56,7 @@ const router = createRouter({
 			name: 'routeplanner',
 			component: () => import('@/views/RouteplannerView.vue'),
 			meta: {
-				roles: ['admin', 'user'], // This route requires admin role
+				roles: RIGHTS_PRESETS.OFFICE, // This route requires office role
 			},
 		},
 		{
@@ -64,7 +64,7 @@ const router = createRouter({
 			name: 'form',
 			component: () => import('@/views/FormView.vue'),
 			meta: {
-				roles: ['admin', 'user'], // This route requires admin role
+				roles: RIGHTS_PRESETS.AUDITOR, // This route requires auditor role
 			},
 		},
 	],
@@ -74,25 +74,38 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
 	const authStore = useAuthStore()
 
+	// Only fetch once on initial load
 	if (authStore.initializing) {
-		await authStore.fetchUser() // Fetch user data if not already done
+		await authStore.fetchUser()
 	}
 
+	// Allow access to login page
 	if (to.path === '/login') {
-		if (authStore.isAuthenticated) {
-			// Redirect to home if already authenticated
+		return authStore.isAuthenticated ? next('/') : next()
+	}
+
+	// Must be authenticated for all other routes
+	if (!authStore.isAuthenticated) {
+		return next('/login') // removed alert, bad UX in guards
+	}
+
+	// Check role-based access
+	if (to.meta.roles && to.meta.roles.length > 0) {
+		const SUPER_ROLES = ['admin', 'developer']
+		const userRight = authStore.userRights
+
+		console.log('userRight:', userRight) // ✅ what is it actually?
+		console.log('required roles:', to.meta.roles) // ✅ what does the route expect?
+
+		const allowed =
+			userRight && (SUPER_ROLES.includes(userRight) || to.meta.roles.includes(userRight))
+
+		if (!allowed) {
 			return next('/')
-		} else {
-			return next() // Allow access to the login page
 		}
 	}
 
-	if (authStore.isAuthenticated === false) {
-		// Redirect to a login page or show an error if not authenticated
-		alert('You must be logged in to access this page.')
-		return next('/login') // Prevent navigation
-	}
-	next() // Allow navigation if authenticated
+	next()
 })
 
 export default router
