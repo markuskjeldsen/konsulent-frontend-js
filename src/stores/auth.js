@@ -37,9 +37,6 @@ export const useAuthStore = defineStore('auth', {
 		async fetchUser() {
 			try {
 				var { data } = await api.get('/user')
-				if (data.rights === USER_RIGHTS.DEVELOPER) {
-					data.rights = USER_RIGHTS.ADMIN
-				}
 				this.user = normalizeUserResponse(data)
 			} catch (err) {
 				console.error('Error fetching user:', err)
