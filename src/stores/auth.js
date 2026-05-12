@@ -3,6 +3,13 @@ import { defineStore } from 'pinia'
 import api from '@/utils/axios'
 import router from '@/router'
 
+export const USER_RIGHTS = {
+	ADMIN: 'admin',
+	DEVELOPER: 'developer',
+	OFFICE: 'office',
+	AUDITOR: 'auditor',
+}
+
 function normalizeUserResponse(data) {
 	if (!data) return null
 	if (data.id || data.ID) return data
@@ -30,8 +37,8 @@ export const useAuthStore = defineStore('auth', {
 		async fetchUser() {
 			try {
 				var { data } = await api.get('/user')
-				if (data.rights === 'developer') {
-					data.rights = 'admin'
+				if (data.rights === USER_RIGHTS.DEVELOPER) {
+					data.rights = USER_RIGHTS.ADMIN
 				}
 				this.user = normalizeUserResponse(data)
 			} catch (err) {

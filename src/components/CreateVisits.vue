@@ -33,6 +33,10 @@
 			<template #cell-adresse="{ item }">
 				{{ item.adresse }}, {{ item.postnr }} {{ item.bynavn }}
 			</template>
+			<!-- klientnavn -->
+			<template #cell-klientnavn="{ item }">
+				{{ item.sagvedr }}
+			</template>
 		</DataTable>
 	</div>
 	<div v-else-if="error">{{ error }}</div>
@@ -49,6 +53,7 @@ const columns = [
 	{ key: 'adresse', label: 'Adresse', sortable: false, filterable: true },
 	{ key: 'status', label: 'Advopro Status', sortable: true, filterable: true },
 	{ key: 'frist_dato', label: 'Frist dato', sortable: true, filterable: true },
+	{ key: 'klientnavn', label: 'Klient', sortable: true, filterable: true },
 ]
 
 const availableVisits = ref([])
@@ -79,6 +84,7 @@ const getVisitKey = (visit) => {
 	return `${visit.sagsnr}-${visit.adresse}-${visit.postnr}-${visit.debtors[0]?.navn || ''}`
 }
 
+const SCB_NAME = 'Santander Consumer Bank'
 const fetchAvailableVisits = async () => {
 	try {
 		const response = await api.get('/visits/AvailableVisit')
@@ -91,6 +97,18 @@ const fetchAvailableVisits = async () => {
 		availableVisits.value.forEach((visit) => {
 			const visitKey = getVisitKey(visit)
 			selectedDebtors.value[visitKey] = visit.debtors.map((_, i) => i)
+		})
+
+		// add field called sagvedr which is klientnavn and if klientnavn is SCB then also sagvedr
+		availableVisits.value = availableVisits.value.map((visit) => {
+			const normalizedKlientnavn = visit.klientnavn.replace(/\r\n/g, ' ').trim()
+
+			return {
+				...visit,
+				sagvedr: normalizedKlientnavn.includes(SCB_NAME)
+					? `SCB - ${visit.sagvedr}`
+					: normalizedKlientnavn,
+			}
 		})
 
 		error.value = null

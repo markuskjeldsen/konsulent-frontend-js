@@ -50,6 +50,9 @@ const isAllowed = computed(() => {
 	if (AuthStore.user?.rights === 'developer') {
 		allowed = true
 	}
+	if (AuthStore.user?.rights === 'office') {
+		allowed = true
+	}
 
 	return allowed
 })
