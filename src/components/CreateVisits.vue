@@ -35,7 +35,7 @@
 			</template>
 			<!-- klientnavn -->
 			<template #cell-klientnavn="{ item }">
-				{{ item.sagvedr }}
+				{{ item.klientRef }}
 			</template>
 		</DataTable>
 	</div>
@@ -85,7 +85,7 @@ const getVisitKey = (visit) => {
 }
 
 const SCB_NAME = 'Santander Consumer Bank'
-const NDF_NAME = 'Nordea Finans Danmark'
+const NFD_NAME = 'Nordea Finans Danmark'
 const fetchAvailableVisits = async () => {
 	try {
 		const response = await api.get('/visits/AvailableVisit')
@@ -106,10 +106,10 @@ const fetchAvailableVisits = async () => {
 
 			return {
 				...visit,
-				sagvedr: normalizedKlientnavn.includes(SCB_NAME)
+				klientRef: normalizedKlientnavn.includes(SCB_NAME)
 					? `SCB - ${visit.sagvedr}`
-					: normalizedKlientnavn.includes(NDF_NAME)
-						? `NDF`
+					: normalizedKlientnavn.includes(NFD_NAME)
+						? `NFD`
 						: normalizedKlientnavn,
 			}
 		})
